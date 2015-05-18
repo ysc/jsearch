@@ -27,5 +27,5 @@ public interface Indexer {
      * 为目录及其所有子目录下的所有文本建立索引
      * @param dir 目录
      */
-    public void indexDir(String dir);
+    void indexDir(String dir);
 }
