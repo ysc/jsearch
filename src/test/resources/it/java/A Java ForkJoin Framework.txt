@@ -1,0 +1,49 @@
+Given reasonable base task granularities, the cost of constructing and managing a thread can be greater than the computation time of the task itself.
+While granularities can and should be subject to tuning when running programs on particular platforms, the extremely coarse granularities necessary to outweigh thread overhead limits opportunities for exploiting parallelism.
+Normally, there are as many worker threads as there are CPUs on a system.
+In native frameworks such as Cilk, these are mapped to kernel threads or lightweight processes, and in turn to CPUs.
+In Java, the JVM and OS must be trusted to map these threads to CPUs.
+However, this is a very simple task for the OS, since these threads are computationally intensive.
+Any reasonable mapping strategy will map these threads to different CPUs.
+All fork/join tasks are instances of a lightweight executable class, not instances of threads.
+In Java, independently executable tasks must implement interface Runnable and define a run method.
+In the FJTask framework, these tasks subclass FJTask rather than subclassing Thread, both of which implement Runnable.
+In both cases, a class can alternatively implement Runnable and then supply instances to be run within executing tasks or threads.
+Because tasks operate under restricted rules supported by FJTask methods, it is much more convenient to subclass FJTask, so as to be able to directly invoke them.
+A special purpose queuing and scheduling discipline is used to manage tasks and execute them via the worker threads (see section 2.1)
+These mechanics are triggered by those few methods provided in the task class: principally fork, join, isDone (a completion status indicator), and some convenience methods such as coInvoke that forks then joins two or more tasks.
+A simple control and management facility (here, FJTaskRunnerGroup) sets up worker pools and initiates execution of a given fork/join task when invoked from a normal thread (such as the one performing main in a Java program)
+Subtasks generated in tasks run by a given worker thread are pushed onto that workers own deque.
+When a worker thread has no local tasks to run, it attempts to take ("steal") a task from another randomly chosen worker, using a FIFO (oldest first) rule.
+When a worker thread encounters a join operation, it processes other tasks, if available, until the target task is noticed to have completed (via isDone)
+As discussed in more detail in [5], the use of LIFO rules for each thread processing its own tasks, but FIFO rules for stealing other tasks is optimal for a wide class of recursive fork/join designs.
+FJTasks themselves maintain only a boolean completion status, and perform all other operations via delegation to their current worker threads.
+The FJTaskRunnerGroup class serves to construct worker threads, maintains some shared state (for example, the identities of all worker threads, needed for steal operations), and helps coordinate startup and shutdown.
+More detailed implementation documentation is available inside the util.concurrent package.
+This section discusses only two sets of problems and solutions encountered when implementing this framework: Supporting efficient deque operations (push, pop, and take), and managing the steal protocol by which threads obtain new work.
+The pop and take operations can only interfere if the deque is about to become empty.
+Otherwise they are guaranteed to operate on disjoint elements of the array.
+In these times of nearly continuous performance improvements of compilers and JVMs, performance measurements are only of transient value.
+However, the metrics reported in this section reveal some basic properties of the framework.
+A collection of seven fork/join test programs are briefly described in the following table.
+These programs are adaptations of those available as demos in the util.concurrent package.
+They were selected to show some diversity in the kinds of problems that can be run within this framework, as well as to obtain results for some common parallel test programs.
+Sort Merge/Quick sort (based on an algorithm from Cilk)  of 100 million numbers.
+While there is no evidence about this either way, it is possible that the lags to map new threads to CPUs increased with numbers of threads and/or varied systematically across the different test programs.
+However, in general, the results show that increasing the number of threads reliably increased the number of CPUs employed.
+Another way of measuring scalability is in terms of task rates, the average time taken to execute a single task (which may be either a recursive or a leaf step)
+The following figure shows data from a single instrumented run capturing task rates.
+Ideally, the numbers of tasks processed per unit time per thread should be constant.
+The fact that they generally slightly decrease with numbers of threads indicates some scalability limitations.
+Note the fairly wide difference in task rates, reflecting differences in task granularities.
+As seen in the figure, in most programs, the relative number of stolen tasks is at most a few percent.
+However, the LU and MM programs generate larger imbalances in workloads (and thus relatively more stealing) as the number of threads increase.
+It is possible that some algorithmic tuning of these programs could reduce this effect, and in turn lead to better speedups.
+On this JVM, the underlying cause appears to be that stopping threads for collection takes time approximately proportional to the number of running threads.
+Because more running threads generate more garbage per unit time, overhead can climb approximately quadratically with numbers of threads.
+Even so, this significantly impacts performance only when the GC rate is relatively high to begin with.
+However, the resulting issues invite further research and development of concurrent and parallel GC algorithms.
+Characteristics of application programs (including memory locality, task locality, use of global synchronization) often have more bearing on both scalability and absolute performance than do characteristics of the framework, JVM or underlying OS.
+For example, informal tests showed that the careful avoidance of synchronization in deques (discussed in section 3.1) has essentially no impact on programs with relatively low task generation rates such as LU.
+However, the focus on keeping task management overhead to a minimum widens the range of applicability and utility of the framework and the associated design and programming techniques.
+In addition to incremental improvements, future work on this framework may include construction of useful applications (as opposed to demos and tests), subsequent evaluations under production program loads, measurements on different JVMs, and development of extensions geared for use with clusters of multiprocessors.

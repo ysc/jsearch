@@ -1,0 +1,1 @@
+In practice, network bandwidth or cpu limits the total capacity in bytes.

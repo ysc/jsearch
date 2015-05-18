@@ -1,0 +1,131 @@
+Interactive online services are forcing the storage community to meet new demands as desktop applications migrate to the cloud.
+Services like email, collaborative documents, and social networking have been growing exponentially and are testing the limits of existing infrastructure.
+Meeting these services' storage demands is challenging due to a number of con icting requirements.
+NoSQL design space: we partition the datastore and replicate each partition separately, providing full ACID semantics within partitions, but only limited consistency guarantees across them.
+We provide traditional database features, such as secondary indexes, but only those features that can scale within user-tolerable latency limits, and only with the semantics that our partitioning scheme can support.
+We contend that the data for most Internet services can be suitably partitioned (e.g., by user) to make this approach viable, and that a small, but not spartan, set of features can substantially ease the burden of developing cloud applications.
+It handles more than three billion write and 20 billion read transactions daily and stores nearly a petabyte of primary data across many global datacenters.
+In contrast to our need for a storage platform that is.
+Asynchronous Master/Slave A master node replicates write-ahead log entries to at least one slave.
+Log appends are acknowledged at the master in parallel with.
+The master can support fast ACID transactions but risks downtime or data loss during failover to a slave.
+Synchronous Master/Slave A master waits for changes to be mirrored to slaves before acknowledging them, allowing failover without data loss.
+Master and slave failures need timely detection by an external system.
+Optimistic Replication Any member of a homogeneous replica group can accept mutations [23], which are asynchronously propagated through the group.
+However, the global mutation ordering is not known at commit time, so transactions are impossible.
+Failover requires a series of high-latency stages often causing a user-visible outage, and there is still a huge amount of complexity.
+Why build a fault-tolerant system to arbitrate mastership and failover work ows if we could avoid distinguished masters altogether?
+We replicate a write-ahead log over a group of symmetric peers.
+A novel extension to Paxos, detailed in Section 4.4.1, allows local reads at any up-to-date replica.
+Even with fault tolerance from Paxos, there are limitations to using a single log.
+With replicas spread over a wide area, communication latencies limit overall throughput.
+Moreover, progress is impeded when no replica is current or a majority fail to acknowledge writes.
+In a traditional SQL database hosting thousands or millions of users, using a synchronously replicated log would risk interruptions of widespread impact [11]
+So to improve availability and throughput we use multiple replicated logs, each governing its own partition of the data set.
+The underlying data is stored in a scalable NoSQL datastore in each datacenter (see Figure 1)
+See Figure 2 for the various operations on and between entity groups.
+Operations within an account are transactional and consistent: a user who sends or labels a message is guaranteed to observe the change despite possible failover to another replica.
+Nearly all applications built on Megastore have found natural ways to draw entity group boundaries.
+Our schema language lets applications control the placement of hierarchical data, storing data that is accessed together in nearby rows or denormalized into the same row.
+Megastore emphasizes cost-transparent APIs with runtime costs that match application developers' intuitions.
+This is not the right model for Megastore applications for several reasons:
+Reads dominate writes in our target applications, so it pays to move work from read time to write time.
+Storing and querying hierarchical data is straightforward in key-value stores like Bigtable.
+We provide an implementation of the merge phase of the merge join algorithm, in which the user provides multiple queries that return primary keys for the same table in the same order; we then return the intersection of keys for all the provided queries.
+Each entity is mapped into a single Bigtable row; the primary key values are concatenated to form the Bigtable row key, and each remaining property occupies its own Bigtable column.
+Note how the Photo and User tables in Figure 3 share.
+Secondary indexes can be declared on any list of entity.
+The PhotosByTag index in Figure 3 is global and enables discovery of photos marked with a given tag, regardless of owner.
+Global index scans can read data owned by many entity groups but are not guaranteed to re ect all recent updates.
+This would make the data accessible as a normal index or as a virtual repeated property on User, with a time-ordered entry for each contained Photo.
+Storing all metadata in a single Bigtable row allows us to update it atomically through a single Bigtable transaction.
+Each index entry is represented as a single Bigtable row;
+A transaction writes its mutations into the entity group's write-ahead log, then the mutations are applied to the data.
+Bigtable provides the ability to store multiple values in the.
+Read: Obtain the timestamp and log position of the last committed transaction.
+Application logic: Read from Bigtable and gather writes into a log entry.
+Commit: Use Paxos to achieve consensus for appending that entry to the log.
+Apply: Write mutations to the entities and indexes in Bigtable.
+For example, consider a calendar application in which each calendar has a distinct entity group, and we want to send an invitation to a group of calendars.
+A single transaction can atomically send invitation queue messages to many distinct calendars.
+Each calendar receiving the message will process the invitation in its own transaction which updates the invitee's state and deletes the message.
+There is a long history of message queues in full-featured.
+Our support is notable for its scale: declaring a queue automatically creates an inbox on each entity group, giving us millions of endpoints.
+Since these transactions have much higher latency and increase the risk of contention, we generally discourage applications from using the feature in favor of queues.
+Nevertheless, they can be useful in simplifying application code for unique secondary key enforcement.
+Megastore's integrated backup system supports periodic full snapshots as well as incremental backup of transaction logs.
+The restore process can bring back an entity group's state to any point in time, optionally omitting selected log entries (as after accidental deletes)
+The backup system complies with legal and common sense principles for expiring deleted data.
+We avoid granting the same operators access to both the encryption keys and the encrypted data.
+This section details the heart of our synchronous replication scheme: a low-latency implementation of Paxos.
+We discuss operational details and present some measurements of our production service.
+Megastore's replication system provides a single, consistent view of the data stored in its underlying replicas.
+Reads and writes can be initiated from any replica, and ACID semantics are preserved regardless of what replica a client starts from.
+Replication is done per entity group by synchronously replicating the group's transaction log to a quorum of replicas.
+Writes typically require one round of interdatacenter communication, and healthy-case reads run locally.
+The Paxos algorithm is a way to reach consensus among.
+It tolerates delayed or reordered messages and replicas that fail by stopping.
+Once a value is chosen by a majority, all future attempts to read or write the value will reach the same outcome.
+The ability to determine the outcome of a single value by.
+In this section we discuss the optimizations and innovations that make Paxos practical for our system.
+If a write fails on a replica's Bigtable, it cannot be considered committed until the group's key has been evicted from that replica's coordinator.
+Handling of rare failure cases or network partitions is described in Section 4.7
+In a master-based system, each successful write includes an implied prepare message granting the master the right to issue accept messages for the next log position.
+If the write succeeds, the prepares are honored, and the next write skips directly to the accept phase.
+Megastore does not use dedicated masters, but instead uses leaders.
+So far all replicas have been full replicas, meaning they.
+Reads at these replicas re ect a consistent view of some point in the recent past.
+For reads that can tolerate this staleness, read-only replicas help disseminate data over a wide geographic area without impacting write latency.
+Figure 5 shows the key components of Megastore for an.
+Megastore is deployed through a client library and auxiliary servers.
+Applications link to the client library, which implements Paxos and other algorithms: selecting a replica for read, catching up a lagging replica, and so on.
+To minimize wide-area roundtrips, the library submits remote Paxos operations to stateless intermediary replication servers communicating with their local Bigtables.
+Replication servers periodically scan for incomplete writes and propose no-op values via Paxos to bring them to completion.
+This section details data structures and algorithms required to make the leap from consensus on a single value to a functioning replicated log.
+To ensure that a replica can participate in a write quorum even as it recovers from previous outages, we permit replicas to accept out-of-order proposals.
+Query Local: Query the local replica's coordinator to determine if the entity group is up-to-date locally.
+Find Position: Determine the highest possibly-committed log position, and select a replica that has ap229
+Catchup: As soon as a replica is selected, catch it up to the maximum known log position as follows:
+For any log positions without a known-committed value available, invoke Paxos to propose a no-op write.
+Paxos will drive a majority of replicas to converge on a single value|either the no-op or a previously proposed write.
+Validate: If the local replica was selected and was not previously up-to-date, send the coordinator a validate message asserting that the (entity group; replica) pair re ects all committed writes.
+Do not wait for a reply| if the request fails, the next read will retry.
+Query Data: Read the selected replica using the timestamp of the selected log position.
+If the selected replica becomes unavailable, pick an alternate replica, perform catchup, and read from it instead.
+The results of a single large query may be assembled transparently from multiple replicas.
+At commit time all pending changes to the state are packaged and proposed, with a timestamp and next leader nominee, as the consensus value for the next log position.
+If a write is not accepted on a replica, we must remove the entity group's key from that replica's coordinator.
+Before a write is considered committed and ready to apply, all full replicas must have accepted or had their coordinator invalidated for that entity group.
+The write algorithm (shown in Figure 8) is as follows:
+Accept Leader: Ask the leader to accept the value as proposal number zero.
+Prepare: Run the Paxos Prepare phase at all replicas with a higher proposal number than any seen so far at this log position.
+Replace the value being written with the highest-numbered proposal discovered, if any.
+Invalidate: Invalidate the coordinator at all full replicas that did not accept the value.
+Fault handling at this step is described in Section 4.7 below.
+Writers using single-phase Paxos skip Prepare messages by sending an Accept command at proposal number zero.
+Since multiple proposers may submit values with proposal number zero, serializing at this replica ensures only one value corresponds with that proposal number for a particular log position.
+In the write algorithm above, each full replica must either accept or have its coordinator invalidated, so it might appear that any single replica failure (Bigtable and coordinator) will cause unavailability.
+The coordinator is a simple process with no external dependencies and no persistent storage, so it tends to be much more stable than a Bigtable server.
+Nevertheless, network and host failures can still make the coordinator unavailable.
+To address network partitions, coordinators use an out-ofband protocol to identify when other coordinators are up, healthy, and generally reachable.
+Invalidate messages are always safe, but validate messages must be handled with care.
+Races between validates for earlier writes and invalidates for later writes are protected in the coordinator by always sending the log position associated with the action.
+There are also races associated with a crash between an invalidate by a writer at position n and a validate at some position m < n.
+We detect crashes using a unique epoch number for each incarnation of the coordinator: validates are only allowed to modify the coordinator state if the epoch remains unchanged since the most recent read of the coordinator.
+But in practice most of the problems with running the coordinator are mitigated by the following factors:
+Coordinators are much simpler processes than Bigtable servers, have many fewer dependencies, and are thus naturally more available.
+Coordinators' simple, homogeneous workload makes them cheap and predictable to provision.
+Operators can centrally disable coordinators for maintenance or unhealthy periods.
+A quorum of Chubby locks detects most network partitions and node unavailability.
+Application servers in multiple datacenters may initiate writes to the same entity group and log position simultaneously.
+All but one of them will fail and need to retry their transactions.
+The increased latency imposed by synchronous replication increases the likelihood of con icts for a given per-entity-group commit rate.
+Limiting that rate to a few writes per second per entity.
+While sequestering the replica can seem appealing, the primary impact is a hit to availability: one less replica is eligible to help writers form a quorum.
+The valid use case is when attempted operations might cause harm|e.g.
+In this section, we report some measurements of its scale, availability, and performance.
+By comparison, synchronous replication guarantees strong transactional semantics over wide-area networks and improves the performance of current reads.
+The number and diversity of these applications is evidence of Megastore's ease of use, generality, and power.
+We hope that Megastore demonstrates the viability of a middle ground in feature set and replication consistency for today's scalable storage systems.
+Special thanks to Adi Ofer for providing the spark to make this paper happen.
+A scalable data platform for a large number of small applications.

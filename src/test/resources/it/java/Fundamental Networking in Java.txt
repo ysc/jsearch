@@ -1,0 +1,404 @@
+This book was written and typeset by the author using Adobe FrameMaker, Acrobat, and Distiller on Macintosh and PC platforms, and supplied to the publisher and printer as an Adobe Portable Document Format (PDF) file.
+The text of the book is set in 10/11 point FF Scala and Scala Sans, designed by Martin Majoor, and distributed by FSI FontShop International.
+Program text is set in Lucida Sans Typewriter, proportionally reduced so as to match the x-height of the text, and indented in units of ems.
+Apart from any fair dealing for the purposes of research or private study, or criticism or review, as permitted under the Copyright, Designs and Patents Act 1988, this publication may only be reproduced, stored or transmitted, in any form or by any means, with the prior permission in writing of the publishers, or in the case of reprographic reproduction in accordance with the terms of licences issued by the Copyright Licensing Agency.
+Enquiries concerning reproduction outside those terms should be sent to the publishers.
+The publisher makes no representation, express or implied, with regard to the accuracy of the information contained in this book and cannot accept any legal responsibility or liability for any errors or omissions that may be made.
+The Java platform and language were conceived with networking support as a core design principle.
+A measure of its success in this area is how unusual it is today to find a Java application that does not have at least some measure of network awareness or dependence.
+Developers today routinely build applications and services that a decade ago would have been regarded as highly complex and requiring rare expertise.
+I was an early reviewer of this book and I admire its economical and thorough but eminently readable style, lucidly describing complex issues without ever outstaying its welcome.
+This book combines academic rigour with a practical approach deeply informed by real-world experience and I have no hesitation in recommending it to developers of all experience levels.
+Experienced engineers building network-centric infrastructure or services should not be without this book.
+In fact, any Java developer building distributed applications such as J2EE, Jini, and Web Services should read this book—at least to understand the fundamental implications of networking on application design and implementation.
+Server and client architectures, using both blocking and non-blocking I/O schemes, are discussed and analysed from the point of view of scalability and with a particular emphasis on performance analysis.
+An extensive list of TCP/IP platform dependencies, not documented in Java, is provided, along with a handy reference to the various states a TCP/IP port can assume.
+These and all other trademarks referred to in this book remain property of their respective owners.
+The organization of the book is described in section 1.2
+I have resisted without apology the recent tendency to re-present all of computer science as design patterns, even in Chapter 12, ’Server and client models’, for which design patterns do exist.
+The relevant parts of Java and the Java Class Library themselves constitute design patterns which subsume many existing patterns for network programming.
+Several anonymous reviewers contributed significantly to the final form and content of this book.
+Java and network programming have always been a good match, for a number of reasons.
+Part I of the book introduces network programming and outlines some of the special problems associated with it.
+A comprehensive glossary, a cross-index of Java classes and methods, and a general index are provided.
+Indented paragraphs like this can be skipped on a first reading.
+Syntax is specified in the usual meta-language, where square brackets [ and ] contain optional elements, and ellipses … denote optional repetions.
+When introducing methods or fields of a class or interface, a short-form pseudo-Java syntax format like this is used:
+Every complete source code example in this book has been compiled and executed on Windows and Solaris platforms, and in many cases has been used to interoperate between both platforms.
+Java code is presented in various formats as dictated by space and pagination considerations.
+The purposes and uses of the various Java network address classes are explained in Table 2.1
+By streaming we mean that data transmitted and received is treated as a continuous stream of bytes, without message boundaries.
+The following Java import statements are assumed in the examples throughout this chapter.
+Client and server communicate over reliable connection between active sockets.
+Transmissions are automatically paced to the capacity of the intervening network, and re-transmitted as necessary if not acknowledged.
+The packets in each direction are paced and are subject to the requirement for ‘slow start’, with the exception of acknowledgement packets.
+First we look at the parameters for constructing already-bound sockets; we then look at the method for binding unbound sockets.
+This is always equal to the port at which the server socket is listening.
+That’s the port the client has connected to, so there is no other possibility.3
+The server still works correctly but its ability to handle concurrent clients is severely limited.
+The behaviour when changing this setting after a server socket is bound, or constructed with a non-default constructor, is undefined.
+Note that these methods set and get a boolean state, not some sort of ‘reuse-address’ as their names may suggest.
+The receive-buffer size is set and interrogated by the methods:
+See section 3.13 for further discussion of socket buffer sizes.
+The first four of these create sockets which are already connected to the specified target.
+The local port number to which a socket is bound can be obtained by the method:
+Before connecting the socket as described in section 3.4.10, you may wish to set the receive buffer size.
+The receive buffer size is set and interrogated by the methods:
+See section 3.13 for further discussion of socket buffer sizes.
+Like the bind operation itself for client sockets, this operation is almost entirely pointless and is rarely if ever employed.
+Note that these methods set and get a boolean state, not some sort of ‘reuse-address’ as their names may suggest.
+Once a server socket is constructed and bound, client connections are accepted with the method:
+Obviously this means that if the amount of data to be written exceeds the send-buffer size, the initial excess will have been written to the network, and only the final non-excess part of the data will be buffered locally, when the write method returns.
+Beware of an deadlock problem with object input and output streams.
+The following code fragment will always deadlock if present at both client and server:
+See also the object stream deadlock problem discussed in section 3.6.2
+The simplest way to terminate a connection is to close the socket, which terminates the connection in both directions and releases the platform’s socket resources.
+Connected sockets must be closed by both parties to the conversation when the conversation is complete, as discussed in section 3.7.4
+When the service provided by the server is being terminated, the listening socket must be closed as discussed in section 3.7.4
+This can be done while conversations with accepted sockets are in progress without disturbing those conversations.
+Similarly, a server processing single-shot transactions could shutdown its socket for output immediately after writing the reply.
+Output shutdown can also be used to semi-synchronize client and server before closing, in circumstances where this is important.
+Before closing, both ends do an output shutdown and then a blocking read expecting an EOF.13 When the EOF is received, that end is assured that the other end has done the output shutdown.
+Whichever end did the output shutdown first will block in the read for the other end to do its shutdown.
+This is shown in the sequence diagram of Figure 3.3
+Anything else received constitutes an error in the application protocol: data sent but not received.
+The technique provides an opportunity to debug this as well.
+When a socket has been shutdown for input, the behaviour at the local end is as follows: the socket and its output stream behave normally for writing purposes, but for reading purposes the socket and its input stream behave as though the socket had been closed by the other end: subsequent reads on the socket return.
+The input-shutdown technique is little used, and these major semantic variations don’t exactly help.
+Behaviour (a), if you can rely on it, can be handy: the other end can keep sending data without it piling up at the receiver, like ignoring the club bore without hurting his feelings, and while also allowing the local end to keep sending data.
+A server which only processes one request per connection and which doesn’t need to read the entire request for any reason might do this.
+Behaviour (b) on the other hand allows the other end to detect the input shutdown, belatedly and fatally, by losing the connection.
+This seems fairly useless: you might as well just close the connection.
+Once the conversation is complete, the socket must be closed.
+Any one of these is sufficient, and exactly one of them is necessary, to close the socket and release all its resources.
+You can’t use more than one of these techniques on any given socket.
+As a general rule you should close the output stream rather than the input stream or the socket, as the output stream may require flushing.
+The server should normally have some mechanism for being shut down.
+Often this is done via a protocol command sent over an accepted connection; it can also be done via a command-line or graphical user interface.
+Socket options appear below more or less in order of their relative importance.
+Java programs can run on any platform and are not entitled to assume this.
+Even if the platform is known and does support keep-alive, the default delay is two hours before the dead connection is detected, and this can only be altered system-wide by an administrator, if at all.
+Usually this two-hour detection period is only palatable as a final fall-back.
+For all these reasons, prudent network programming always uses a finite read timeout.
+For clients which have just transmitted a request and are waiting for a reply, the duration of the timeout should take account of the expected transmission times in both directions plus the latency of the request—the execution delay at the other end while the reply is being retrieved or computed.
+How long you should wait in relation to this total expected time is a policy question: as a starting point, the time-out might be set to twice the sum of the expected time.
+In general, timeouts should be set slightly too long rather than slightly too short.19
+Good networking programming practice requires that retries of transactions which have timed out should occur at intervals which are initially random within a reasonable interval, to avoid the ‘thundering herd’ problem, and which increase exponentially, to reduce the network load which may have been part of the initial problem.
+For servers which are waiting for a client request, the timeout value is strictly a matter of policy: how long is the server prepared to wait for a request before abandoning the connection? The period chosen should be long enough to support heavy network loads and a reasonable amount of client processing, but not so long as to tie up precious server resources for absurd lengths of time.
+The resources allocated to a server connection consist of the connected socket itself and, usually, a thread and some sort of client context.
+Setting a socket timeout has no effect on blocking socket operations already in progress.
+The size of a socket’s send and receive buffers is managed by these methods:
+You can set the send buffer size of a socket at any time before closing it.
+The values returned by the ‘get’ methods may not match the values you sent.
+They also may not match the actual values being used by the underlying platform.
+If the receiving application is slow in reading data from the buffer, its receive buffer size needs to be even larger, so as not to stall the sender.
+The bandwidth used in this calculation is the effective bandwidth over the entire connection, not just the bandwidth via which either endpoint is connected to the Internet, which may be much higher.
+The bandwidth-delay product can be understood by thinking of the network as a cylindrical pipe as shown in Figure 3.4
+The bandwidth of the network corresponds to the cross-sectional area of the pipe, and the delay of the network corresponds to the length of the pipe.
+If it is genuinely necessary to abort a connection rather than terminate it gracefully, the ‘hard close’ can be used.
+Keep-alive should be viewed as a kind of ‘court of last resort’ for finally terminating dead connections after two hours if it is available.
+It should not be relied on as a substitute for sensible use of timeouts.
+You should consider using application-level connection probes (‘pings’) where connections are expected to be of long duration.
+Obviously receiving out-of-band data in-line is something of an absurdity.
+This attribute is a hint to the network about the type of service required for packets originating from the socket.
+The traffic-class for a socket can be managed with the methods:
+These options affect routing paths as well as priority in the router.
+For example, a satellite link would be a good choice to maximize throughput, but a bad choice for minimizing latency.
+The options are often set asymmetrically: for example, an application sending bulk data might choose to maximize throughput; on the other hand the receiving application might choose to minimize latency on its sent packets so that acknowledgements are sent quickly.
+The router may write this field based on a router-specific traffic classification scheme, and it may rewrite the field to something the next router understands.
+The RFCs mentioned in this section are summarized in Table 3.5
+Fast buffered binary and character I/O make it possible to write ‘high-performance, I/O-intensive programs that manipulate streams or files of binary data’
+As this example shows, various types of stream exist which together combine the functions of input-output, buffering, and data conversion.
+Traditional streams provided buffering as an optional feature, rather than a built-in part of the I/O mechanism; this design made it possible to run multiple buffers, whether deliberately or inadvertently.
+The technique used for chaining streams together can imply a data copy operation at each stream junction, especially when doing data conversions.
+All these factors can lead to inefficient I/O in Java programs.
+In Java ‘new I/O’, these three functions have been separated.
+There is a hierarchy of channel classes and a separate hierarchy of buffer classes.
+Separating the I/O functions into channel operations and buffer operations allowed the Java designers to:
+More powerful channel classes exist which support multiplexing as well as reading and writing.
+A Java channel represents an open data path, possibly bidirectional, to an external data source or sink such as a file or a socket.
+The complete tree of channel interfaces and classes is shown in Table 4.1
+Instead of getting the channel from the socket, it is usually more to the point to get the socket from the channel:
+The amount of remaining data or space in a buffer is given by:
+The position, limit, and capacity of a buffer are illustrated in Figure 4.1
+The complete tree of buffer classes is shown in the tree diagram of Table 4.2
+The initial settings of the buffers returned by each of the above methods are summarized in Table 4.3
+These operations are discussed in detail in the following subsections.
+Each concrete buffer implementation for a primitive type 0 exports a method for compacting buffers:
+If maximum efficiency is required, the copy example above can be rewritten thus:
+In our meta-notation, the following methods are supported for each type 0:
+A view buffer is direct if and only if it was allocated from a direct byte buffer, and read-only if and only if it was allocated from a read-only byte buffer.
+The completed bulk output example is shown in Example 4.2
+Channels are initially created in blocking mode, and streams—even those with channels—can only be operated in blocking mode.
+A non-blocking read on a network channel transfers only the data, if any, that was already in the socket receive-buffer at the time of the call.
+If this amount is zero, the read transfers no data and returns zero.
+Multiplexing is somewhat like being directly driven by hardware interrupts from the network controller.
+The difference between managing a single channel in blocking mode and managing (multiplexing) multiple channels is illustrated in Figure 4.7
+For some reason which Sun have not made clear, multiplexing must be used in conjunction with non-blocking I/O.10
+The selectable I/O operations and their meanings when ready are specified in Table 4.4
+It is an arbitrary object which remains associated with the selection key which results from the registration, and which can be set, unset, and retrieved subsequently:
+The selected channels are obtained via the selected-keys set, and can be processed individually as shown in the following example:
+If the select operation returns a result of zero, one or more of the following have occurred:
+When the selection result is zero, the set of selected keys is empty, so the following invariant holds:
+The complete selection process with this method of timeout processing looks something like this:
+The elaboration of this scheme is left as an exercise for the reader.
+The design of ‘new I/O’ allows for multiple threads to operate on channels simultaneously.
+A channel may be read by multiple threads simultaneously; may be written by multiple threads simultaneously; and may be simultaneously read to and written from.
+A selector may be operated on by multiple threads simultaneously.
+Multiple threads can read from and write to the same channel.
+A channel may or may not support concurrent reading and writing: if it does, a read operation and a write operation may or may not proceed concurrently (without blocking), depending on the type of the channel.12
+Socket channels support concurrent reading and writing without blocking; file channels support it with blocking which is partially platform-dependent.
+In either case, the return value of the selection operation and the selected-key set of the selector reflect the status of the operation at the time it returned: in particular, the return value may.
+The exceptions that can arise during operations on channels and buffers, and their meanings, are listed in Table 4.6
+Like all channels, these channels are intially created in blocking mode.
+The following Java import statements are assumed in the examples throughout this chapter.
+If no exception is thrown, the return value indicates how much data was read, possibly zero.
+If no exception is thrown, the return value indicates how much data was written, possibly zero.
+Once registered with a selector, a channel remains registered until it is deregistered.
+This involves deallocating whatever resources were allocated to the channel by the selector.
+A channel cannot be deregistered directly; instead, the key representing its registration must be cancelled.
+Cancelling a key requests that the channel be deregistered during the selector's next selection operation.’
+Generally, there isn’t a great deal of point in using non-blocking I/O in clients: it saves threads, but clients rarely deal with enough different servers (or connections) for it to be worth the trouble.
+Figure 6.2 illustrates the relationship between transport firewalls and application firewalls.
+Transport firewalls generally restrict outgoing connections to those originated by an application firewall.
+An installation’s total effective firewall consists of the transport firewall and all application firewalls.
+This is rather like enclosing a sealed addressed envelope inside another sealed addressed envelope, with the understanding that the inner envelope is to be posted to the inner addressee when received by the outer addressee (the recipient of the outer envelope)
+Consider the example of an over-supervised girl (Alice) trying to write to her boyfriend (Bob) when her outgoing mail is scrutinized by her parents.
+Alice seals a letter to her boyfriend inside a letter to an approved girlfriend (Tracey)
+The letter to Tracey gets through the parental “firewall”, and Tracey posts the inner envelope to Bob on receipt.
+We will examine the origins and current specifications of secure sockets; we will discuss the level of security they provide; and we will discuss their implementation and use in Java.
+In brief, the security of a network communication depends on four things:
+I emphasise again that authorization is inevitably a decision that can only be taken by the application: I have never seen a way in which authorization can be satisfactorily delegated to an API or framework.
+Note the order in which I have placed these factors.
+Security is too often thought of only as cryptography, but it’s really not much use having a beautifully encrypted and decrypted conversation unless you’re sure you know who you’re talking to, and unless you can detect interpolations, forgeries, and replays.
+Typically the keys used for signing message digests and encrypting messages are short-lived keys agreed specifically for that conversation, to guard against key leakage and replay attacks: these are known as ‘session keys’
+The Handshake Protocol allows the server and client to authenticate each other and to negotiate an encryption algorithm and secret cryptographic keys before the application protocol transmits or receives its first byte of data.
+The Handshake Protocol is itself secure, having the properties of authentication, privacy, and integrity:
+As we will see, the cipher keys for the connection can be changed as often as desired by either end.
+Sun’s Java implementation complies with the relevant standards, as should those by third-party vendors, so they should interoperate with each other and with compliant non-Java implementations.
+Throughout the rest of this chapter the following Java import statements are assumed:5
+The first secure socket takes a long time to create.
+With these factories, you can code an entire application using standard sockets:
+Regardless of whether the handshake is initiated manually or automatically, there are several possibilities:
+Regardless of whether the handshake is synchronous or asynchronous, the completion of the handshake can be monitored immediately by using a handshake listener as discussed below.
+If handshaking fails for any reason, the socket is automatically closed and cannot be used any further.
+If you do like the peer’s identity inside the handshake completion callback but don’t like the negotiated cipher suite, you can change the enabled cipher suites on the socket, invalidate the session, and start a new handshake.
+The ‘client’ mode of a socket is controlled by the methods:
+Unless you have enabled a non-authenticating cipher suite,8 the server will authenticate itself to the client during the handshake.
+In addition to this, you can also request or require the client to authenticate itself to the server, by using these methods:
+As we saw in section 7.2.5, the strongest common cipher suite is used for a secure connection.
+There are several reasons why an enabled cipher suite might not be used:
+The strongest common protocol is always negotiated for a secure conection.
+An enabled protocol can only be used if it is also enabled at the remote peer.
+As an example, the following code snippet ensures that the SSLv3 protocol is not used:
+A similar technique can be used to disable the SSLv2Hello pseudo-protocol described above, which is not recognized by some SSL implementations.
+The session context of a session can be obtained via the method:
+Session contexts can also be queried to list all available session IDs, or to retrieve a specific session based on its ID.
+The sessions bound to a session context can be enumerated as follows:
+The general technique for client socket factories is shown in Example 7.1
+The general technique for server socket factories is shown in Example 7.2
+In a practical implementation these would be defined // externally, e.g.
+In a practical implementation these would be defined // externally, e.g.
+Verify the distinguished name (DN) // of the zeroth certificate.
+This means that to use this scheme you would have to use blocking mode and streams for the actual I/O, and non-blocking mode when selecting.
+Having to use blocking I/O implies having to commit a thread, whereupon the scalability advantage of non-blocking I/O and selection is lost.
+SSLEngineResult wrap(ByteBuffer src, ByteBuffer[] dst, int offset, int length) throws SSLException;
+In this section we will explore the implementation of the class described above.
+The following assumptions and principles will be observed to simplify the implementation of this class.
+The general sequence of operation of the state machine is as follows:
+These declaration statements declare the socket channel, the SSL engine, the four buffers, and the current engine result (maintained as an instance variable)
+Another possible implementation would use a new thread per invocation:
+At this point the SSL context has been established to a point where SSL engines can be created.
+At this point the server socket channel has been established to a point where connections can be accepted.
+The present implementation makes no attempt at thread-safety, on the assumption that it will be only used by a single thread.
+Enhance it to be safe for use by multiple threads.
+A ‘datagram’ is a single transmission which may be delivered zero or more times.
+Its sequencing with respect to other datagrams between the same two endpoints is not guaranteed.
+In other words it may be delivered out of order, or not at all, or multiple times.
+Datagram payloads above 512 bytes are apt to be fragmented by routers and therefore effectively lost.
+Datagrams can be made to give an ‘exactly once’ delivery model with a very small amount of extra programming at both ends:
+Clearly this is pretty easy to program, and rather obliterates the apparent limitations of unreliable delivery and sequencing.
+Variations on the protocol outined above are possible: the client might want to do something more intelligent with a reply sequence number which is too high; ditto the server with an out-of-sequence request.
+This quickly becomes an exercise in protocol design, a non-trivial discipline in its own right.
+The following Java import statements are assumed in the examples throughout this chapter.
+This means that the length attribute of a datagram which is re-used for multiple receive operations must be reset before the second and subsequence receives; otherwise it continually shrinks to the size of the smallest datagram received so far.
+It also means that the application can’t distinguish between a datagram which was exactly the maximum length and a datagram which was too big and.
+First we look at the parameters for constructing bound sockets; we then look at the method for binding unbound sockets.
+Before using a datagram socket, its send and receive buffer sizes should be adjusted as described in section 9.11
+Exception handling for datagram sockets is discussed in section 9.8
+Receiving datagrams is even simpler than sending, as shown below:
+In the case above we didn’t specify an offset when creating the packet, so we might use the simpler form:
+If we want to reply to this datagram, we saw in section 9.2.6 that a received.
+If a datagram socket has been connected, it can be disconnected with the method:
+If a datagram socket is to be used in the connected mode, it would normally be connected at the beginning of a conversation and disconnected at the end of the conversation.
+After being closed, the socket is no longer usable for any purpose.
+The significant Java exceptions that can arise during datagram socket operations are shown in Table 9.3
+Datagram socket options are presented below more or less in order of their relative importance.
+The later in the chapter an option appears, the less you need to be concerned with it.
+Any network program which reads with infinite timeout is sooner or later going to experience an infinite delay.
+For all these reasons, prudent network programming almost always uses a finite receive timeout at clients.
+The receive timeout is set and interrogated with the methods:
+The send and receive buffer sizes are set and interrogated by the methods:
+You can perform these operations at any time before the socket is closed.
+The ‘traffic class’ associated with a datagram socket can be set and interrogated with the methods:
+The client places a unique sequence number in each request datagram; the server must use the same sequence number in its reply.
+This lets the client associate an acknowledgment with a request, and allows the server to have some policy about out-of-sequence datagrams.
+It would be better to ‘learn’ how well the network is performing rather than sticking doggedly to some preconception.
+We should adapt the behaviour of our application to the current network load in two critical ways.
+Second, when we are re-transmitting dropped packets, we must aim at reducing the congestion on the network rather than making it worse.
+Although even this implementation is an improvement over Stevens’, which just maintains one static set of statistics for all sockets.
+If the application communicates with multiple servers, each send/receive operation starts out with possibly irrelevant historical statistics, as Stevens agreed.
+A server for this protocol must obey two simple protocol rules:
+The latter raises some questions of protocol design and application policy.
+An end-of-sequence indication in the application protocol is also required to resolve (a)
+The following Java import statements are assumed in the examples throughout this chapter.
+As the comments say, the program should be doing useful work or sleeping instead of spinning mindlessly while the I/O transfers return zero.
+These techniques are available or planned as shown in Table 11.1
+Broadcasting and multicasting are also useful when clients need to look for services.
+Instead of sending out unicast requests by cycling through a range of addresses where the service mught be, the client can send out a single broadcast or multicast request.
+Instances of the service are listening for such broadcasts or multicasts, and each instance responds by sending its unicast address back to the client: this completes the service-location process.
+Anycast’, when implemented, will be even more useful for this purpose.
+Sending a limited or directed broadcast is simply a matter of sending a datagram to the appropriate broadcast address.
+Receiving limited or directed broadcasts is simply a matter of binding a datagram socket to the wildcard address and executing a receive operation.
+Broadcasting in Java is discussed in detail in section 11.5
+These have two purposes: they specify how far a multicast datagram will travel, and they specify the range within which the address is expected to be unique.
+Subject to the same one-to-zero rule and the router’s own policy, the router then informs adjacent routers that it no longer wants to receive those multicasts, and so on recursively.
+When an application closes a socket which has joined but not left one or more multicast groups, leave-group processing for each such group occurs automatically as part of the close process.
+Another benefit of multicasting is that, ignoring packet loss and retransmission issues, all recipients receive the data at much the same time.
+This has useful applications in time-sensitive applications such as distributing stock-market quotations (stock tickers)
+As compared to unicasting, multicasting becomes more and more economic the more recipients there are.
+To put this another way, multicasting is a solution which scales far better than unicasting.
+When the number of recipients is very large, huge-scale applications such as movie shows over the Internet become technically and economically viable: these could never be feasible via unicast.
+In this sense, Internet multicasting is comparable in importance to the introduction of broadcast radio and television.
+Multicasting in general, including broadcasting as a special case, has three significant limitations.
+Multicasting is supported by a given router if and only if specifically enabled by its administrator.
+This is largely a chicken-and-egg problem: presently there are few multicast applications on the Internet and therefore small demand for multicast support, which in turn is discouraging the development and deployment of the applications.
+This may change over time as multicast applications are developed.
+Unless the application protocol provides it, there is no way for a transmitting application to know how many receivers there currently are: therefore, if responses are expected, there is no way to determine whether all expected responses have been received.
+The transmitter can’t even know whether or not there is currently any point in transmitting anything.
+A solution to this limitation may or may not be required: if it is, the application protocol must provide an explicit sign-on/sign-off negotiation.
+The following subsections describe the techniques used for Java broadcasting.
+See section 11.5.4 for a discussion of broadcasting from multi-homed hosts.
+Receiving a broadcast in a multi-homed host only requires that the receiving socket is bound to the wildcard address: this is the default, and it is usually required for receiving broadcasts anyway.
+Similarly, sending a directed broadcast from a multi-homed host presents no difficulty, because the system routes a directed broadcast to the target subnet via the appropriate interface.
+Please don’t use this technique: read on and use a multicast solution.
+The following subsections describe the techniques used for multicasting in Java.
+In multicasting, it is most likely that you will bind to the wildcard address, indicating that you want to receive multicasts from anywhere; conversely, it is not very likely that you’ll bind to an ephemeral port, as you will be joining a multicast group whose port number has most probably already been defined, as discussed in section 11.6.5
+Next you must join the multicast group(s) you will be listening to.
+By default, when an application is both sending and receiving multicasts to and from the same group, port, and interface, the application will receive its own transmissions.
+This ‘local loopback’ can be disabled on some systems via the methods:
+There are three simple rules to be followed for applications which will execute in multi-homed hosts, or where you don’t know in advance whether the host will be multi-homed or not:
+These three rules are sufficient to make multi-homed multicasting work.
+The reasons for these rules are discussed in the rest of this section.
+It is important to understand these different purposes when programming for multi-homed hosts.
+The various address/interface items and their purposes are summarized in Table 11.4
+Determines the network interface via which multicasts are sent: defaults to a systemchosen interface in a platform-specific way.
+The Java permissions required for multicasting when a security manager is installed are summarized in Table 11.5
+Static allocation policies do not scale to large numbers of services, and exhaust the address space prematurely.
+This is the motivation for dynamic allocation policies, which allow addresses to be allocated on demand and released when not in use.
+Dynamic allocation requires an allocation service and an allocation protocol.
+Several higher-level reliable multicast protocols have been developed, and research is continuing in this very interesting area.
+I present several short and simple pieces of Java or pseudo-Java code.
+These are not presented as the best or only solutions, but to provoke thought and understanding in the reader.
+For the same reason I have not provided anything like an ‘ideal’ implementation or framework for servers or clients.
+Whenever (a) is greater than one, as it usually is, and (b) is non-trivial, as it usually is, we immediately encounter the need to use Java threads so as not to hold up other clients while we service the first one.
+In the simplest possible server model, everything happens in one thread, like the sequential server of Example 3.1
+We can refine Model A slightly, by separating the task of accepting new connection from the task of handling a connection, by using two queues and two threads.
+From the point of view of queueing theory this refinement doesn’t change Model A at all: since the first queue is fed directly into the second they constitute one large queue.
+To unify the discussion below, we introduce the following interface, representing a task which processes a session:5
+Realistically, we will hit one or more ‘soft’ limits first, beyond which performance will degrade.
+Most probably we will first hit a physical-memory limit, beyond which performance will degrade for each memory increment according to the performance curve of the virtual-memory system, but again affecting all threads, not just the new one.
+Servers which expect thousands of concurrent clients need more efficiency and more reliability than this model provides.
+We would probably prefer to limit resource usage at the server and allow client performance to degrade gracefully up to a limit of clients, refusing service (‘lost calls’) to clients beyond our limit—a graceful degradation with self-protection.
+We can solve both these problems by arranging to use an existing thread instead of a new thread.
+If the thread already exists, the creation overhead per connection is zero; we can avoid overwhelming the execution environment at the server by managing the number of threads which pre- exist; and we can implement some explicit overflow policy when we receive a connection in excess of capacity.
+The next models to be considered use a pool of pre-existing worker threads, to reduce the process of dispatching a new conversation to simply dispatching the new connection to an existing thread.
+A dispatcher despatches each incoming client connection to a service thread.
+It can do any one or more of the following:
+This model, where a fixed number of service threads are created in advance, is suitable at two extremes:
+Its simplicity of programming and minor development time are other attractions.
+In the discussion so far, all dynamic threads have exited after processing one connection.
+This means that, after a usage peak, a large number of idle threads still exist, consuming memory resources if nothing else.
+We could arrange for these dynamic threads to exit in response to some dynamic state of the system, e.g.
+The system might be deemed to be idle in a number of ways; for example:
+This policy might be suitable if the number of clients is unknown or subject to large usage peaks, and it is desired to release resources as quickly as possible.
+The maximum could be fixed; alternatively, the system could tune it dynamically in accordance with average and peak usage, perhaps using statistical smoothing techniques, which might be suitable where usage is unknown in advance.
+This is easy to program, and it has the advantage that threads persist during periods of heavy load and exit during quieter periods, i.e.
+As in section 12.2.4, even though there is no queue, this technique has the same effect of bounding the queue length, and therefore of limiting the arrival rate, because if there are no idle worker threads, none of them are accepting connections.
+The threading models resulting from different choices of the various parameters presented in the preceding sections are summarised in Table 12.1
+In addition, the factory may implement its own allocation policy: for example, it might return a new handler object per invocation:
+Using a factory provides a single point in the code where this policy can be changed.
+In transactional application protocols where a ‘conversation’ consists of a single request and reply, either:
+Case (a), the ‘one-shot’ case, is enforced in the server by closing the connection after sending the reply.
+It is implemented in the server by writing the main connection handler as a loop.
+There are several points at which the server may choose to close a connection:
+We can make quite a few refinements to the models presented above by using channel I/O instead of blocking stream I/O in the server.
+Selectors can be used to detect incoming connections without actually accepting them: this leads to a better implementation which never starves worker threads or creates dynamic threads unnecessarily, as shown in Example 12.8 below.
+How can we implement this? We could control multiple connections from one thread by using short socket.
+List connections; // initialization not shown byte[] buffer; // initialization not shown.
+We have no means of deciding which connection to scan for input next, so we must just cycle round them.
+If the next ready connection is the one before the one we are about to read, it has to wait for timeouts to occur on all the other connections being polled.
+This worst-case situation is not at all unrealistic: it occurs when only one of the connections is active.
+This would at least have the virtue of wasting zero time waiting for timeouts, but the problem then becomes what to do when no input is available on any channel: sleep a few milliseconds? Yield the thread? Just spin furiously round the polling loop? We’d rather do nothing rather than just wasting processor cycles, and we’d rather be told rather than having to keep looking.
+If we are using an explicit queue of connections, we only need to enqueue a new connection and it will be picked up by an idle.
+If we are using an implicit queue as in section 12.3.1, again an idle thread will pick up a new connection.
+Both of these are more or less selftuning: the idlest threads will tend to pick up the most connections, upon which they will become less idle, when they will tend to pick up fewer connections, until some of their connections terminate and they become idle again.
+You could also organize all this by hand, by book-keeping the level of activity of each thread, maintaining a separate explicit queue to each one, and choosing the queue to dispatch a new connection to on the basis of its statistics.
+The effect will be exactly the same as letting the system sort itself out with a single dispatch queue, assuming that your statistics are both accurate and well-used: if they aren’t, the situation will be worse.
+It’s hard to see why you would bother doing it ‘manually’
+This gives better throughput, as your bank and supermarket demonstrate: at the bank, there is generally one queue for multiple tellers; at the supermarket, there is generally one queue per checkout.
+For an echo server, the request handler can be as simple as Example 12.11 below, using only one buffer:
+The internal state-management of the buffers takes care of all the book-keeping for us.
+The file-server example uses another approach towards closing the socket: assuming that there is only one filename request per connection, the channel is closed when the output data has been completely transferred; it is also closed as a safety measure if there is no request data at all.
+It should also be closed if the request is invalid.
+An echo server only has to echo whatever comes in whenever it appears, but the file-server of Example 12.12 assumes that the entire request was read in one read.
+If the conversation consists of more than a simple request and reply, ultimately it needs to be implemented implicitly or explictly as a state machine whose continuation (next action) can be can be executed by any thread.
+If we use blocking mode to read the request or reply, we must avoid blocking while synchronized on the selected set of selector keys.
+This means clearing the original in a different way, and copying the set before processing it:
+It is unnecessary to synchronize on the copied set because it is local to the thread.
+The technique of parallel accepts makes it more likely that the selector will report false results, as discussed in section 4.5.4, as a thread may receive a readynotification about a channel that another thread is concurrently processing.
+When we are finished with blocking mode, we must restore non-blocking mode and re-register the channel with the selector.
+To do this, we don’t need to cart around any extra state such as the selector and the interest-set, because we can reuse the registration data in the cancelled key, which is guaranteed to remain intact after its cancellation:
+The total efficiency for simple request-reply message exchanges can be further improved by conserving connections at the client as described in section 12.4
+Where multiple interactions occur with the same server as part of a single overall transaction and their sequencing is unimportant, it can be more efficient to perform them in parallel rather than sequentially.
+This strategy is seen in Web browsers, where a page which consists of text plus several images is retrieved by several connections reading in parallel.
+In this way some of the connection overhead is overlapped with real I/O.
+In a situation like this it may be more natural to use multiplexed channel I/O at the client rather than a number of blocked threads.
+However you can’t act on this advice unless you know what the relevant assumptions are! In this Appendix we examine some ‘fallacies of networking’, and discuss the truth about them.
+These are the celebrated ‘eight fallacies of networking’ of L.
+The following subsections examine these eight fallacies in more detail.
+Bandwidth, the number of bits (or bytes) that can be transmitted per second, is finite, and sometimes surprisingly small.
+The total bandwidth of an end-to-end connection is the bandwidth of the slowest network segment in the path.
+Data cannot be transmitted into a network faster than its bandwidth: this implies queuing at transmitters and therefore leads to additional latency—see section 13.1.2
+The design of any non-trivial networked application must model current transmission volumes and future growth against network bandwidth and latency to obtain expected response times, and verify these against required response times.
+The transport cost between two computers, even when you own both of them and all the cabling and components in between, is not zero: consider the cost of electrical power, service contracts, amortization, and depreciation.
+The mean time between failure for disks is measured in years, not seconds, and the maximum time for an I/O transfer is bounded by seek time and transfer rate, so it is customary for an entire disk I/O request to be serviced before the API returns.
+Implementing network APIs to work the same way would not be reasonable, and using those APIs as though they were disk APIs is not reasonable either.
+In contrast, you don’t always get all the data you asked for when reading from a network.
+This is probably the single most common network programming error, and it is seen daily in programming forums and newsgroups all over the Internet.
+Depending on the networking API; its current mode of operation, and the network protocol being used, you may get any of:
+In general, the only synchronization that occurs between distributed components of a networked application is the synchronization you provide in your application protocol.
+You can only assume that the other end has received your data if you build explicit acknowledgements into your application protocol.
+For example, when a network write API returns, the data written hasn’t necessarily been received by the target application, or by the target computer.
+The data may not even have left the source computer: the write operation may only buffer data for later transmission.
+As we saw in section 13.2.2, socket writes are asynchronous, so an application which writes data to a connection which subsequently breaks cannot possibly be informed about the failure until it executes another network operation.
+Recovering synchronization in this case is once again the responsibility of the application protocol.
+Similarly, it is possible for an end-point or the network to fail in such a way as to cause an application blocked in a socket read to stall forever.
+A non-trivial application should never block on a network read without setting a finite read timeout interval, and it must have a strategy for dealing with timeouts.
+Don’t pre-allocate them statically if you can have the system allocate them dynamically, and don’t just assume that you got what you asked for: see section 13.2.1
+No: there is almost always a time beyond which it is pointless to continue waiting.
+Patience is not and should not be infinite, in networking as in life.
+The design of any non-trivial application requires careful attention to expected service times, reasonable timeout periods, and behaviour when timeouts occur.
+Networking implies packet switching, which implies queuing, which implies waiting.
+Also, remote services are by definition remote, and often the only way you can observe them is via the network, often only via the very application protocol you are trying to exercise, so it can be difficult to discover their status under heavy load—which, of course, is the only time you want to discover its status!
+One component of a distributed system may get everything it asked for; another component may get enough of what it wants to at least function partially, or in a degraded mode of operation; and another component may be unable to function at all.
+Corresponds to a Socket which has been closedc by both the local and remote applications and all acknowledgements exchanged; the port persists for a few minutes at both ends so that any further delayed packets for the connection can expire.
+If timeout is set and expires, whether unsent data is still sent or the connection is reset.
+Unix-based platforms leave unsent data queued for transmission; Windows resets the connection.
+Keep-alive interval is normally 2 hours globally and if changeable requires privilege to change.
+Will be adjusted to fit the platform’s maxima and minima (see below), and may be rounded up or down to suit the platform’s buffer-size granularity as well.
+Most Unix-based platforms accept and ignore the data, so the sender’s writes all succeed.
+Linux accepts and buffers the data but cannot transmit it to the local application, so the sender eventually gets blocked in write, or is returned zero from non-blocking writes.
+This is a complete cross-index of Java packages, classes, and members mentioned in the text.
+First-level entries are present for classes and members, as follows:
+A member (method or field) entry has subentries for the class(es) in which.

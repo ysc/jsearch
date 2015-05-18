@@ -1,0 +1,4 @@
+Learn how to dynamically trace/observe running Java applications (JDK6+) using BTrace.
+Probe – location or event in the target application's code.
+Only a “safe” subset of Java allowed inside tracing methods.
+Run inline/file D-script whenever a specific BTrace script is run.

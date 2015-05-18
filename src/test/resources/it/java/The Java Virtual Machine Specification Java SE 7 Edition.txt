@@ -1,0 +1,1442 @@
+Oracle and Java are registered trademarks of Oracle and/or its affiliates.
+The Specification provided herein is provided to you only under the Limited License Grant included herein as Appendix A.
+It also includes many corrections and clarifications that update the presentation of the specification without changing the logical specification itself.
+We have attempted to correct typos and errata (hopefully without introducing new ones) and to add more detail to the specification where it was vague or ambiguous.
+We thank the many readers who combed through the First Edition of this book and brought problems to our attention.
+Several individuals and groups deserve special thanks for pointing out problems or contributing directly to the new material.
+Carla Schroer and her teams of compatibility testers in Cupertino, California, and Novosibirsk, Russia (with special thanks to Leonid Arbouzov and Alexei Kaigorodov) painstakingly wrote compatibility tests for each testable assertion in the First Edition.
+In the process they uncovered many places where the original specification was unclear or incomplete.
+Marilyn Rash and Hilary Selby Polk of Addison Wesley Longman helped us to improve the readability and layout of this edition at the same time as we were incorporating all the technical changes.
+His dedication to "computational theology" and his commitment to resolving inconsistencies between The Java Virtual Machine Specification and The Java Language Specification have benefited this book tremendously.
+It is essential for compiler writers who wish to target the Java Virtual Machine and for programmers who want to implement a compatible Java Virtual Machine.
+References to the Java Virtual Machine throughout this specification refer to this abstract machine rather than to any specific implementation.
+This specification serves as documentation for a concrete implementation of the Java Virtual Machine only as a blueprint documents a house.
+An implementation of the Java Virtual Machine must embody this specification, but is constrained by it only where absolutely necessary.
+We intend that this specification should sufficiently document the Java Virtual Machine to make possible compatible clean-room implementations.
+The virtual machine that evolved into the Java Virtual Machine was originally designed by James Gosling in 1992 to support the Oak programming language.
+The evolution into its present form occurred through the direct and indirect efforts of many people and spanned Sun's Green project, FirstPerson, Inc., the LiveOak project, the Java Products Group, JavaSoft, and the Java Software group at Sun.
+This book began as internal project documentation edited by Kathy Walrath.
+It was then converted to HTML by Mary Campione and was made available on our Web site before being expanded into book form.
+We owe special thanks to Richard Tuck for his careful review of the manuscript.
+Particular thanks to Bill Joy whose comments, reviews, and guidance have contributed greatly to the completeness and accuracy of this book.
+The popularization of the World Wide Web made these attributes much more interesting.
+Web browsers enabled millions of people to surf the Net and access media-rich content in simple ways.
+At last there was a medium where what you saw and heard was essentially the same regardless of the machine you were using and whether it was connected to a fast network or a slow modem.
+Web enthusiasts soon discovered that the content supported by the Web's HTML document format was too limited.
+The HotJava browser first showcased the interesting properties of the Java programming language and platform by making it possible to embed programs inside HTML pages.
+Programs are transparently downloaded into the browser along with the HTML pages in which they appear.
+Before being accepted by the browser, programs are carefully checked to make sure they are safe.
+The programs behave the same way regardless of where they come from or what kind of machine they are being loaded into and run on.
+A Web browser incorporating the Java platform is no longer limited to a predetermined set of capabilities.
+Visitors to Web pages incorporating dynamic content can be assured that their machines cannot be damaged by that content.
+Programmers can write a program once, and it will run on any machine supplying a Java run-time environment.
+Like a real computing machine, it has an instruction set and manipulates various memory areas at run time.
+It is reasonably common to implement a programming language using a virtual machine; the best-known virtual machine may be the P-Code machine of UCSD Pascal.
+The first prototype implementation of the Java Virtual Machine, done at Sun Microsystems, Inc., emulated the Java Virtual Machine instruction set in software hosted by a handheld device that resembled a contemporary Personal Digital Assistant (PDA)
+Oracle's current implementations emulate the Java Virtual Machine on mobile, desktop and server devices, but the Java Virtual Machine does not assume any particular implementation technology, host hardware, or host operating system.
+It is not inherently interpreted, but can just as well be implemented by compiling its instruction set to that of a silicon CPU.
+It may also be implemented in microcode or directly in silicon.
+The Java Virtual Machine knows nothing of the Java programming language, only of a particular binary format, the class file format.
+A class file contains Java Virtual Machine instructions (or bytecodes) and a symbol table, as well as other ancillary information.
+For the sake of security, the Java Virtual Machine imposes strong syntactic and structural constraints on the code in a class file.
+However, any language with functionality that can be expressed in terms of a valid class file can be hosted by the Java Virtual Machine.
+Chapter 2 gives an overview of the Java Virtual Machine architecture.
+Chapter 3 introduces compilation of code written in the Java programming language into the instruction set of the Java Virtual Machine.
+Chapter 4 specifies the class file format, the hardware- and operating systemindependent binary format used to represent compiled classes and interfaces.
+Chapter 5 specifies the start-up of the Java Virtual Machine and the loading, linking, and initialization of classes and interfaces.
+Chapter 6 specifies the instruction set of the Java Virtual Machine, presenting the instructions in alphabetical order of opcode mnemonics.
+Chapter 7 gives a table of Java Virtual Machine opcode mnemonics indexed by opcode value.
+Throughout this specification we refer to classes and interfaces drawn from the Java SE platform API.
+Whenever we refer to a class or interface (other than those declared in an example) using a single identifier N, the intended reference is to the class or interface named N in the package java.lang.
+We use the fully qualified name for classes or interfaces from packages other than java.lang.
+A fixed width font is used for Java Virtual Machine data types, exceptions, errors, class file structures, Prolog code, and Java code fragments.
+Italic is used for Java Virtual Machine "assembly language", its opcodes and operands, as well as items in the Java Virtual Machine's run-time data areas.
+It is also used to introduce new terms and simply for emphasis.
+Non-normative information, designed to clarify the specification, is given in smaller, indented text.
+It does not describe any particular implementation of the Java Virtual Machine.
+To implement the Java Virtual Machine correctly, you need only be able to read the class file format and correctly perform the operations specified therein.
+Implementation details that are not part of the Java Virtual Machine's specification would unnecessarily constrain the creativity of implementors.
+For example, the memory layout of run-time data areas, the garbage-collection algorithm used, and any internal optimization of the Java Virtual Machine instructions (for example, translating them into machine code) are left to the discretion of the implementor.
+All references to Unicode in this specification are given with respect to The Unicode Standard, Version 6.0.0, available at http://www.unicode.org/
+Compiled code to be executed by the Java Virtual Machine is represented using a hardware- and operating system-independent binary format, typically (but not necessarily) stored in a file, known as the class file format.
+The class file format precisely defines the representation of a class or interface, including details such as byte ordering that might be taken for granted in a platform-specific object file format.
+Chapter 4, "The class File Format", covers the class file format in detail.
+The values of the boolean type encode the truth values true and false, and the default value is false.
+However, boolean values do have limited support in the Java Virtual Machine.
+The values of the returnAddress type are pointers to the opcodes of Java Virtual Machine instructions.
+Of the primitive types, only the returnAddress type is not directly associated with a Java programming language type.
+The values of the integral types of the Java Virtual Machine are:
+Each of the four value sets includes not only the finite nonzero values that are ascribed to it above, but also the five values positive zero, negative zero, positive infinity, negative infinity, and NaN.
+Each extended-exponent value set has a larger range of exponent values than the corresponding standard value set, but does not have more precision.
+Except for NaNs, values of the floating-point value sets are ordered.
+When arranged from smallest to largest, they are negative infinity, negative finite values, positive and negative zero, positive finite values, and positive infinity.
+NaNs are unordered, so numerical comparisons and tests for numerical equality have the value false if either or both of their operands are NaN.
+In particular, a test for numerical equality of a value against itself has the value false if and only if the value is NaN.
+A test for numerical inequality has the value true if either operand is NaN.
+In Oracle’s Java Virtual Machine implementation, boolean arrays in the Java programming language are encoded as Java Virtual Machine byte arrays, using 8 bits per boolean element.
+Where Java programming language boolean values are mapped by compilers to values of Java Virtual Machine type int, the compilers must use the same encoding.
+There are three kinds of reference types: class types, array types, and interface types.
+Their values are references to dynamically created class instances, arrays, or class instances or arrays that implement interfaces, respectively.
+An array type consists of a component type with a single dimension (whose length is not given by the type)
+The component type of an array type may itself be an array type.
+If, starting from any array type, one considers its component type, and then (if that is also an array type) the component type of that type, and so on, eventually one must reach a component type that is not an array type; this is called the element type of the array type.
+The element type of an array type is necessarily either a primitive type, or a class type, or an interface type.
+A reference value may also be the special null reference, a reference to no object, which will be denoted here by null.
+The null reference initially has no run-time type, but may be cast to any type.
+The Java Virtual Machine specification does not mandate a concrete value encoding null.
+The Java Virtual Machine defines various run-time data areas that are used during execution of a program.
+Some of these data areas are created on Java Virtual Machine start-up and are destroyed only when the Java Virtual Machine exits.
+Per-thread data areas are created when a thread is created and destroyed when the thread exits.
+This specification permits Java Virtual Machine stacks either to be of a fixed size or to dynamically expand and contract as required by the computation.
+If the Java Virtual Machine stacks are of a fixed size, the size of each Java Virtual Machine stack may be chosen independently when that stack is created.
+A Java Virtual Machine implementation may provide the programmer or the user control over the initial size of Java Virtual Machine stacks, as well as, in the case of dynamically expanding or contracting Java Virtual Machine stacks, control over the maximum and minimum sizes.
+The following exceptional conditions are associated with Java Virtual Machine stacks:
+If the computation in a thread requires a larger Java Virtual Machine stack than is permitted, the Java Virtual Machine throws a StackOverflowError.
+If Java Virtual Machine stacks can be dynamically expanded, and expansion is attempted but insufficient memory can be made available to effect the expansion, or if insufficient memory can be made available to create the initial Java.
+A Java Virtual Machine implementation may provide the programmer or the user control over the initial size of the heap, as well as, if the heap can be dynamically expanded or contracted, control over the maximum and minimum heap size.
+If a computation requires more heap than can be made available by the.
+Although the method area is logically part of the heap, simple implementations may choose not to either garbage collect or compact it.
+This version of the Java Virtual Machine specification does not mandate the location of the method area or the policies used to manage compiled code.
+The method area may be of a fixed size or may be expanded as.
+The memory for the method area does not need to be contiguous.
+A Java Virtual Machine implementation may provide the programmer or the user control over the initial size of the method area, as well as, in the case of a varying-size method area, control over the maximum and minimum method area size.
+The following exceptional condition is associated with the method area:
+If memory in the method area cannot be made available to satisfy an allocation.
+When creating a class or interface, if the construction of the run-time constant pool requires more memory than can be made available in the method area of the Java Virtual Machine, the Java Virtual Machine throws an OutOfMemoryError.
+An implementation of the Java Virtual Machine may use conventional stacks, colloquially called "C stacks," to support native methods (methods written in a language other than the Java programming language)
+Native method stacks may also be used by the implementation of an interpreter for the Java Virtual Machine's instruction set in a language such as C.
+Java Virtual Machine implementations that cannot load native methods and that do not themselves rely on conventional stacks need not supply native method stacks.
+If supplied, native method stacks are typically allocated per thread when each thread is created.
+This specification permits native method stacks either to be of a fixed size or to dynamically expand and contract as required by the computation.
+If the native method stacks are of a fixed size, the size of each native method stack may be chosen independently when that stack is created.
+A Java Virtual Machine implementation may provide the programmer or the user control over the initial size of the native method stacks, as well as, in the case of varying-size native method stacks, control over the maximum and minimum method stack sizes.
+The following exceptional conditions are associated with native method stacks:
+If the computation in a thread requires a larger native method stack than is.
+If native method stacks can be dynamically expanded and native method stack.
+Operations on local variables and the operand stack are typically with reference to the current frame.
+A frame ceases to be current if its method invokes another method or if its method completes.
+When a method is invoked, a new frame is created and becomes current when control transfers to the new method.
+On method return, the current frame passes back the result of its method invocation, if any, to the previous frame.
+The current frame is then discarded as the previous frame becomes the current one.
+Note that a frame created by a thread is local to that thread and cannot be referenced by any other thread.
+An integer is considered to be an index into the local variable array if and only if that integer is between zero and one less than the size of the local variable array.
+A value of type long or type double occupies two consecutive local variables.
+Such a value may only be addressed using the lesser index.
+However, doing so invalidates the contents of local variable n.
+The Java Virtual Machine does not require n to be even.
+In intuitive terms, values of types long and double need not be 64-bit aligned in the local variables array.
+Implementors are free to decide the appropriate way to represent such values using the two local variables reserved for the value.
+The Java Virtual Machine uses local variables to pass parameters on method invocation.
+On instance method invocation, local variable 0 is always used to pass a reference to the object on which the instance method is being invoked (this in the Java programming language)
+The Java Virtual Machine does not mandate any particular internal structure for objects.
+In some of Oracle’s implementations of the Java Virtual Machine, a reference to a class instance is a pointer to a handle that is itself a pair of pointers: one to a table containing the methods of the object and a pointer to the Class object that represents the type of the object, and the other to the memory allocated from the heap for the object data.
+The floating-point operations of the Java Virtual Machine do not throw.
+The rounding operations of the Java Virtual Machine always use IEEE 754 round to nearest mode.
+Inexact results are rounded to the nearest representable value, with ties going to the value with a zero least-significant bit.
+But Java Virtual Machine instructions that convert values of floating-point types to values of integral types round toward zero.
+The Java Virtual Machine does not give any means to change the floating-point rounding mode.
+In all other contexts, whether on the operand stack or elsewhere, and regardless of floating-point mode, floating-point values of type float and double may only range over the float value set and double value set, respectively.
+In particular, class and instance fields, array elements, local variables, and method parameters may only contain values drawn from the standard value sets.
+An implementation of the Java Virtual Machine that supports an extended floatingpoint value set is permitted or required, under specified circumstances, to map a value of the associated floating-point type between the extended and the standard value sets.
+Such a value set conversion is not a type conversion, but a mapping between the value sets associated with the same type.
+Where value set conversion is indicated, an implementation is permitted to perform one of the following operations on a value:
+If the value is of type float and is not an element of the float value set, it maps the value to the nearest element of the float value set.
+If the value is of type double and is not an element of the double value set, it maps the value to the nearest element of the double value set.
+In addition, where value set conversion is indicated, certain operations are required:
+If the value is not an element of the float value set, it maps the value to the nearest element of the float value set.
+Suppose execution of a Java Virtual Machine instruction that is not FP-strict causes a value of type double to be pushed onto an operand stack that is FPstrict, passed as a parameter, or stored into a local variable, a field, or an element of an array.
+If the value is not an element of the double value set, it maps the value to the nearest element of the double value set.
+Such required value set conversions may occur as a result of passing a parameter of a floating-point type during method invocation, including native method invocation; returning a value of a floating-point type from a method that is not FPstrict to a method that is FP-strict; or storing a value of a floating-point type into a local variable, a field, or an array in a method that is not FP-strict.
+Not all values from an extended-exponent value set can be mapped exactly to a value in the corresponding standard value set.
+If a value being mapped is too large to be represented exactly (its exponent is greater than that permitted by the standard value set), it is converted to a (positive or negative) infinity of the corresponding type.
+If a value being mapped is too small to be represented exactly (its exponent is smaller than that permitted by the standard value set), it is rounded to the nearest of a representable denormalized value or zero of the same sign.
+Value set conversion preserves infinities and NaNs and cannot change the sign of the value being converted.
+Value set conversion has no effect on a value that is not of a floating-point type.
+Other methods named <clinit> in a class file are of no consequence.
+They cannot be invoked by any Java Virtual Machine instruction and are never invoked by the Java Virtual Machine itself.
+Because the name <clinit> is not a valid identifier, it cannot be used directly in a program written in the Java programming language.
+Class and interface initialization methods are invoked implicitly by the Java Virtual Machine; they are never invoked directly from any Java Virtual Machine instruction, but are invoked only indirectly as part of the class initialization process.
+A method is signature polymorphic if and only if all of the following conditions hold :
+An exception in the Java Virtual Machine is represented by an instance of the class Throwable or one of its subclasses.
+Throwing an exception results in an immediate nonlocal transfer of control from the point where the exception was thrown.
+Most exceptions occur synchronously as a result of an action by the thread in which they occur.
+An asynchronous exception, by contrast, can potentially occur at any point in the execution of a program.
+The Java Virtual Machine throws an exception for one of three reasons:
+When the instruction embodies an operation that violates the semantics of the Java programming language, for example indexing outside the bounds of an array.
+A Java Virtual Machine may permit a small but bounded amount of execution to occur before an asynchronous exception is thrown.
+This delay is permitted to allow optimized code to detect and throw these exceptions at points where it is practical to handle them while obeying the semantics of the Java programming language.
+A simple implementation might poll for asynchronous exceptions at the point of each control transfer instruction.
+Since a program has a finite size, this provides a bound on the total delay in detecting an asynchronous exception.
+Since no asynchronous exception will occur between control transfers, the code generator has some flexibility to reorder computation between control transfers for greater performance.
+A Java Virtual Machine instruction consists of a one-byte opcode specifying the operation to be performed, followed by zero or more operands supplying arguments or data that are used by the operation.
+Many instructions have no operands and consist only of an opcode.
+Ignoring exceptions, the inner loop of a Java Virtual Machine interpreter is effectively.
+The decision to limit the Java Virtual Machine opcode to a byte and to forgo data alignment within compiled code reflects a conscious bias in favor of compactness, possibly at the cost of some performance in naive implementations.
+Not assuming data alignment means that immediate data larger than a byte must be constructed from bytes at run time on many machines.
+Thus, most operations on values of actual types boolean, byte, char, and short are correctly performed by instructions operating on values of computational type int.
+Type support in the Java Virtual Machine instruction set opcode byte short int long float double char reference.
+Certain Java Virtual Machine instructions such as pop and swap operate on the operand stack without regard to type; however, such instructions are constrained to use only on values of certain categories of computational types, also given in Table 2.3
+Gain access to more local variables using a wider index, or to a larger immediate.
+The Java Virtual Machine does not indicate overflow during operations on integer data types.
+In particular, the Java Virtual Machine requires full support of IEEE 754 denormalized floating-point numbers and gradual underflow, which make it easier to prove desirable properties of particular numerical algorithms.
+The Java Virtual Machine requires that floating-point arithmetic behave as if every floating-point operator rounded its floating-point result to the result precision.
+Inexact results must be rounded to the representable value nearest to the infinitely precise result; if the two nearest representable values are equally near, the one having a least significant bit of zero is chosen.
+This is the IEEE 754 standard's default rounding mode, known as round to nearest mode.
+The Java Virtual Machine uses the IEEE 754 round towards zero mode when converting a floating-point value to an integer.
+This results in the number being truncated; any bits of the significand that represent the fractional part of the operand value are discarded.
+Round towards zero mode chooses as its result the type's value closest to, but no greater in magnitude than, the infinitely precise result.
+The Java Virtual Machine's floating-point operators do not throw run-time exceptions (not to be confused with IEEE 754 floating-point exceptions)
+An operation that overflows produces a signed infinity, an operation that underflows produces a denormalized value or a signed zero, and an operation that has no mathematically definite result produces NaN.
+All numeric operations with NaN as an operand produce NaN as a result.
+Comparisons on values of type long (lcmp) perform a signed comparison.
+Comparisons on values of floating-point types (dcmpg, dcmpl, fcmpg, fcmpl) are performed using IEEE 754 nonsignaling comparisons.
+The type conversion instructions allow conversion between Java Virtual Machine numeric types.
+These may be used to implement explicit conversions in user code or to mitigate the lack of orthogonality in the instruction set of the Java Virtual Machine.
+The Java Virtual Machine directly supports the following widening numeric conversions:
+The Java Virtual Machine also directly supports the following narrowing numeric conversions:
+A narrowing numeric conversion can result in a value of different sign, a different order of magnitude, or both; it may thereby lose precision.
+A narrowing numeric conversion of an int or long to an integral type T simply discards all but the N lowest-order bits, where N is the number of bits used to represent type T.
+This may cause the resulting value not to have the same sign as the input value.
+In a narrowing numeric conversion of a floating-point value to an integral type T, where T is either int or long, the floating-point value is converted as follows:
+Otherwise, if the floating-point value is not an infinity, the floating-point value is rounded to an integer value V using IEEE 754 round towards zero mode.
+If T is long and this integer value can be represented as a long, then the result is the long value V.
+If T is of type int and this integer value can be represented as an int, then the result is the int value V.
+Or the value must be too large (a positive value of large magnitude or positive infinity), and the result is the largest representable value of type int or long.
+The result is correctly rounded using IEEE 754 round to nearest mode.
+A value too small to be represented as a float is converted to a positive or negative zero of type float; a value too large to be represented as a float is.
+A double NaN is always converted to a float NaN.
+Despite the fact that overflow, underflow, or loss of precision may occur, narrowing conversions among numeric types never cause the Java Virtual Machine to throw a run-time exception (not to be confused with an IEEE 754 floating-point exception)
+Although both class instances and arrays are objects, the Java Virtual Machine creates and manipulates class instances and arrays using distinct sets of instructions:
+Access fields of classes (static fields, known as class variables) and fields.
+The control transfer instructions conditionally or unconditionally cause the Java Virtual Machine to continue execution with an instruction other than the one following the control transfer instruction.
+This is the normal method dispatch in the Java programming language.
+The call site object was bound to a specific lexical occurrence of the invokedynamic instruction by the Java Virtual Machine as a result of running a bootstrap method before the first execution of the instruction.
+Therefore, each occurrence of an invokedynamic instruction has a unique linkage state, unlike the other instructions which invoke methods.
+The method return instructions, which are distinguished by return type, are ireturn (used to return values of type boolean, byte, char, short, or int), lreturn, freturn, dreturn, and areturn.
+In addition, the return instruction is used to return from.
+Exceptions can also be thrown by various Java Virtual Machine instructions if they detect an abnormal condition.
+At no point during a method invocation may the number of monitor exits performed by T on M since the method invocation exceed the number of monitor entries performed by T on M since the method invocation.
+Note that the monitor entry and exit automatically performed by the Java Virtual Machine when invoking a synchronized method are considered to occur during the calling method's invocation.
+The Java Virtual Machine must provide sufficient support for the implementation of the class libraries of the Java SE platform.
+Some of the classes in these libraries cannot be implemented without the cooperation of the Java Virtual Machine.
+Classes that might require special support from the Java Virtual Machine include those that support:
+The example classes cited above fall into this category as well.
+Security, such as the classes in the package java.security and other classes such as SecurityManager.
+Weak references, such as the classes in the package java.lang.ref.
+The list above is meant to be illustrative rather than comprehensive.
+An exhaustive list of these classes or of the functionality they provide is beyond the scope of this specification.
+See the specifications of the Java SE platform class libraries for details.
+Thus far this specification has sketched the public view of the Java Virtual Machine: the class file format and the instruction set.
+The implementor may prefer to think of them as a means to securely communicate fragments of programs between hosts each implementing the Java SE platform, rather than as a blueprint to be followed exactly.
+It is important to understand where the line between the public design and the private implementation lies.
+A Java Virtual Machine implementation must be able to read class files and must exactly implement the semantics of the Java Virtual Machine code therein.
+One way of doing this is to take this document as a specification and to implement that specification literally.
+But it is also perfectly feasible and desirable for the implementor to modify or optimize the implementation within the constraints of this specification.
+So long as the class file format can be read and the semantics of its code are maintained, the implementor may implement these semantics in any way.
+What is "under the hood" is the implementor's business, as long as the correct external interface is carefully maintained.
+There are some exceptions: debuggers, profilers, and just-in-time code generators can each require access to elements of the Java Virtual Machine that are normally considered to be “under the hood.” Where appropriate, Oracle works with other Java Virtual Machine implementors and with tool vendors to develop common interfaces to the Java Virtual Machine for use by such tools, and to promote those interfaces across the industry.
+The implementor can use this flexibility to tailor Java Virtual Machine implementations for high performance, low memory use, or portability.
+What makes sense in a given implementation depends on the goals of that implementation.
+Translating Java Virtual Machine code at load-time or during execution into the.
+Translating Java Virtual Machine code at load-time or during execution into the native instruction set of the host CPU (sometimes referred to as just-in-time, or JIT, code generation)
+The existence of a precisely defined virtual machine and object file format need not significantly restrict the creativity of the implementor.
+The Java Virtual Machine is designed to support many different implementations, providing new and interesting solutions while retaining compatibility between implementations.
+Oracle's JDK software contains a compiler from source code written in the Java programming language to the instruction set of the Java Virtual Machine, and a run-time system that implements the Java Virtual Machine itself.
+Understanding how one compiler utilizes the Java Virtual Machine is useful to the prospective compiler writer, as well as to one trying to understand the Java Virtual Machine itself.
+Note that the term "compiler" is sometimes used when referring to a translator from the instruction set of a Java Virtual Machine to the instruction set of a specific CPU.
+One example of such a translator is a just-in-time (JIT) code generator, which generates platform-specific instructions only after Java Virtual Machine code has been loaded.
+This chapter does not address issues associated with code generation, only those associated with compiling source code written in the Java programming language to Java Virtual Machine instructions.
+This chapter consists mainly of examples of source code together with annotated listings of the Java Virtual Machine code that the javac compiler in Oracle’s JDK release 1.0.2 generates for the examples.
+The Java Virtual Machine code is written in the informal “virtual machine assembly language” output by Oracle's javap utility, distributed with the JDK release.
+You can use javap to generate additional examples of compiled methods.
+The format of the examples should be familiar to anyone who has read assembly code.
+The <index> is the index of the opcode of the instruction in the array that contains the bytes of Java Virtual Machine code for this method.
+Alternatively, the <index> may be thought of as a byte offset from the beginning of the method.
+Some of the material in the comments is emitted by javap; the rest is supplied by the authors.
+The <index> prefacing each instruction may be used as the target of a control transfer instruction.
+Note that the actual operands of Java Virtual Machine control transfer instructions are offsets from the addresses of the opcodes of those instructions; these operands are displayed by javap (and are shown in this chapter) as more easily read offsets into their methods.
+We preface an operand representing a run-time constant pool index with a hash sign and follow the instruction by a comment identifying the run-time constant pool item referenced, as in:
+For the purposes of this chapter, we do not worry about specifying details such as operand sizes.
+Java Virtual Machine code exhibits a set of general characteristics imposed by the Java Virtual Machine's design and use of types.
+In the first example we encounter many of these, and we consider them in some detail.
+The spin method simply spins around an empty for loop 100 times:
+The instruction set of the Java Virtual Machine distinguishes operand types by using distinct bytecodes for operations on its various data types.
+The method spin operates only on values of type int.
+The 100 is pushed using a bipush instruction, which fetches the value it pushes as an immediate operand.
+A simple virtual machine would have also spent additional time fetching and decoding the explicit operand.
+Use of implicit operands makes compiled code more compact and efficient.
+Because most Java Virtual Machine instructions operate on values popped from the operand stack rather than directly on local variables, instructions that transfer values between local variables and the operand stack are common in code compiled for the Java Virtual Machine.
+These operations also have special support in the instruction set.
+The use (and reuse) of local variables is the responsibility of the compiler writer.
+The specialized load and store instructions should encourage the compiler writer to reuse local variables as much as is feasible.
+The resulting code is faster, more compact, and uses less space in the frame.
+Certain very frequent operations on local variables are catered to specially by the Java Virtual Machine.
+The iinc instruction increments the contents of a local variable by a one-byte signed value.
+The iinc instruction in spin increments the first local variable (its first operand) by 1 (its second operand)
+The iinc instruction is very handy when implementing looping constructs.
+The for loop of spin is accomplished mainly by these instructions:
+If the spin example had used a data type other than int for the loop counter, the compiled code would necessarily change to reflect the different data type.
+For instance, if instead of an int the spin example uses a double, as shown:
+The instructions that operate on typed data are now specialized for type double.
+The ldc2_w instruction will be discussed later in this chapter.
+Recall that double values occupy two local variables, although they are only accessed using the lesser index of the two local variables.
+This is also the case for values of type long.
+Note that local variables of the local variable pairs used to store double values in doubleLocals must never be manipulated individually.
+The Java Virtual Machine's opcode size of 1 byte results in its compiled code being very compact.
+However, 1-byte opcodes also mean that the Java Virtual Machine instruction set must stay small.
+As a compromise, the Java Virtual Machine does not provide equal support for all data types: it is not completely orthogonal (Table 2.2)
+For example, the comparison of values of type int in the for statement of example spin can be implemented using a single if_icmplt instruction; however, there is no single instruction in the Java Virtual Machine instruction set that performs a conditional branch on values of type double.
+The Java Virtual Machine provides the most direct support for data of type int.
+This is partly in anticipation of efficient implementations of the Java Virtual Machine's operand stacks and local variable arrays.
+It is also motivated by the frequency of int data in typical programs.
+There are no byte, char, or short versions of the store, load, or add instructions, for instance.
+It must be compiled for the Java Virtual Machine, as follows, using instructions operating on another type, most likely int, converting between short and int values as necessary to ensure that the results of operations on short data stay within the appropriate range:
+The lack of direct support for byte, char, and short types in the Java Virtual Machine is not particularly painful, because values of those types are internally promoted to int (byte and short are sign-extended to int, char is zero-extended)
+Operations on byte, char, and short data can thus be done using int instructions.
+The only additional cost is that of truncating the values of int operations to valid ranges.
+The long and floating-point types have an intermediate level of support in the Java Virtual Machine, lacking only the full complement of conditional control transfer instructions.
+The Java Virtual Machine generally does arithmetic on its operand stack.
+The exception is the iinc instruction, which directly increments the value of a local variable.
+Operands for arithmetic operations are popped from the operand stack, and the results of operations are pushed back onto the operand stack.
+Results of arithmetic subcomputations can thus be made available as operands of their nesting computation.
+For instance, the calculation of ~(grain-1) is handled by these instructions:
+These operands are popped from the operand stack and their difference pushed back onto the operand stack.
+The difference is thus immediately available for use as one operand of the ixor instruction.
+Similarly, the result of the ixor instruction becomes an operand for the subsequent iand instruction.
+Note that the test of the while statement (implemented using the if_icmplt instruction) is at the bottom of the Java Virtual Machine code for the loop.
+This was also the case in the spin examples earlier.
+The test being at the bottom of the loop forces the use of a goto instruction to get to the test prior to the first iteration of the loop.
+If that test fails, and the loop body is never entered, this extra instruction is wasted.
+However, while loops are typically used when their body is expected to be run, often for many iterations.
+For subsequent iterations, putting the test at the bottom of the loop saves a Java Virtual Machine instruction each time around the loop: if the test were at the top of the loop, the loop body would need a trailing goto instruction to get back to the top.
+Control constructs involving other data types are compiled in similar ways, but must use the instructions available for those data types.
+This leads to somewhat less efficient code because more Java Virtual Machine instructions are needed, for example:
+The dcmpl instruction achieves the same effect if the comparison is reversed:
+Once again, whether the comparison fails on a non-NaN value or because it is passed a NaN, the dcmpl instruction pushes an int value onto the operand stack that causes the ifle to branch.
+If both of the dcmp instructions did not exist, one of the example methods would have had to do more work to detect NaN.
+If n arguments are passed to an instance method, they are received, by convention, in the local variables numbered 1 through n of the frame created for the new method invocation.
+The arguments are received in the order they were passed.
+In the Java programming language the instance is accessible via the this keyword.
+Class (static) methods do not have an instance, so for them this use of local variable 0 is unnecessary.
+If the addTwo method were a class method, its arguments would be passed in a similar way to the first version:
+The invocation is set up by first pushing a reference to the current instance, this, on to the operand stack.
+When the frame for the addTwo method is created, the arguments passed to the method become the initial values of the new frame's local variables.
+When it returns, its int return value is pushed onto the operand stack of the frame of the invoker, the add12and13 method.
+The return value is thus put in place to be immediately returned to the invoker of add12and13
+The ireturn instruction takes the int value returned by addTwo, on the operand stack of the current frame, and pushes it onto the operand stack of the frame of the invoker.
+It then returns control to the invoker, making the invoker's frame current.
+The Java Virtual Machine provides distinct return instructions for many of its numeric and reference data types, as well as a return instruction for methods with no return value.
+The same set of return instructions is used for all varieties of method invocations.
+The operand of the invokevirtual instruction (in the example, the run-time constant pool index #4) is not the offset of the method in the class instance.
+The compiler does not know the internal layout of a class instance.
+Instead, it generates symbolic references to the methods of an instance, which are stored in the run-time constant pool.
+Those run-time constant pool items are resolved at run-time to determine the actual method location.
+The same is true for all other Java Virtual Machine instructions that access class instances.
+Note that methods called using the invokespecial instruction always pass this to the invoked method as its first argument.
+To invoke the target of a method handle, a compiler must form a method descriptor that records the actual argument and return types.
+A compiler may not perform method invocation conversions on the arguments; instead, it must push them on the stack according to their own unconverted types.
+Class instances are passed and returned (as reference types) very much like numeric values, although type reference has its own complement of instructions, for example:
+The fields of a class instance (instance variables) are accessed using the getfield and putfield instructions.
+If i is an instance variable of type int, the methods setIt and getIt, defined as:
+As with the operands of method invocation instructions, the operands of the putfield and getfield instructions (the run-time constant pool index #4) are not the offsets of the fields in the class instance.
+Those runtime constant pool items are resolved at run-time to determine the location of the field within the referenced object.
+Arrays are created and manipulated using a distinct set of instructions.
+The newarray instruction is used to create an array of a numeric type.
+The anewarray instruction is used to create a one-dimensional array of object references, for example:
+The anewarray instruction can also be used to create the first dimension of a multidimensional array.
+Alternatively, the multianewarray instruction can be used to create several dimensions at once.
+Compilation of switch statements uses the tableswitch and lookupswitch instructions.
+The tableswitch instruction is used when the cases of the switch can be efficiently represented as indices into a table of target offsets.
+The default target of the switch is used if the value of the expression of the switch falls outside the range of valid indices.
+The Java Virtual Machine's tableswitch and lookupswitch instructions operate only on int data.
+Because operations on byte, char, or short values are internally promoted to int, a switch whose expression evaluates to one of those types is compiled as though it evaluated to type int.
+If the chooseNear method had been written using type short, the same Java Virtual Machine instructions would have been generated as when using type int.
+Other numeric types must be narrowed to type int for use in a switch.
+Where the cases of the switch are sparse, the table representation of the tableswitch instruction becomes inefficient in terms of space.
+The lookupswitch instruction pairs int keys (the values of the case labels) with target offsets in a table.
+If one of the keys matches the value of the expression, execution continues at the associated target offset.
+If no key matches, execution continues at the default target.
+The Java Virtual Machine specifies that the table of the lookupswitch instruction must be sorted by key so that implementations may use searches more efficient than a linear scan.
+Even so, the lookupswitch instruction must search its keys for a match rather than simply perform a bounds check and index into a table like tableswitch.
+Thus, a tableswitch instruction is probably more efficient than a lookupswitch where space considerations permit a choice.
+The Java Virtual Machine has a large complement of instructions that manipulate the contents of the operand stack as untyped values.
+These are useful because of the Java Virtual Machine's reliance on deft manipulation of its operand stack.
+Note that the Java Virtual Machine never allows its operand stack manipulation instructions to modify or break up individual values on the operand stack.
+Looking more closely, the try block is compiled just as it would be if the try were not present:
+If no exception is thrown during the execution of the try block, it behaves as though the try were not there: tryItOut is invoked and catchOne returns.
+Following the try block is the Java Virtual Machine code that implements the single catch clause:
+If the value that is thrown is not an instance of TestExc, the catch clause of catchOne cannot handle it.
+Instead, the value is rethrown to the invoker of catchOne.
+Multiple catch clauses of a given try statement are compiled by simply appending the Java Virtual Machine code for each catch clause one after the other and adding entries to the exception table, as shown:
+Control is transferred to the Java Virtual Machine code for the block of that catch clause.
+If the value thrown does not match the parameter of any of the catch clauses of catchTwo, the Java Virtual Machine rethrows the value without invoking code in any catch clause of catchTwo.
+Nested try-catch statements are compiled very much like a try statement with multiple catch clauses:
+There are four ways for control to pass outside of the try statement: by falling through the bottom of that block, by returning, by executing a break or continue statement, or by raising an exception.
+If tryItOut returns without raising an exception, control is transferred to the finally block using a jsr instruction.
+In more detail, the subroutine call works as follows: The jsr instruction pushes the address of the following instruction (return at index 7) onto the operand stack before jumping.
+The code for the finally block (in this case the aload_0 and invokevirtual instructions) is run.
+Assuming execution of that code completes normally, the ret instruction retrieves the address from local variable 2 and resumes execution at that address.
+A try statement with a finally clause is compiled to have a special exception handler, one that can handle any exception thrown within the try statement.
+If tryItOut throws an exception, the exception table for tryFinally is searched for an appropriate exception handler.
+The following jsr instruction does a subroutine call to the code for the finally block.
+Compiling a try statement with both a catch clause and a finally clause is more complex:
+If tryItOut throws an instance of TestExc, the first (innermost) applicable exception handler in the exception table is chosen to handle the exception.
+If an exception is not thrown by handleExc, tryCatchFinally returns normally.
+That exception handler transfers control to index 20, where the thrown value is first stored in local.
+The code for the finally block at index 26 is called as a subroutine.
+If it returns, the thrown value is retrieved from local variable 1 and rethrown using the athrow instruction.
+If a new value is thrown during execution of the finally clause, the finally clause aborts, and tryCatchFinally returns abruptly, throwing the new value to its invoker.
+Each class file contains the definition of a single class or interface.
+Although a class or interface need not have an external representation literally contained in a file (for instance, because the class is generated by a class loader), we will colloquially refer to any valid representation of a class or interface as being in the class file format.
+A class file consists of a stream of 8-bit bytes.
+Multibyte data items are always stored in big-endian order, where the high bytes come first.
+This chapter presents the class file format using pseudostructures written in a C-like structure notation.
+To avoid confusion with the fields of classes and class instances, etc., the contents of the structures describing the class file format are referred to as items.
+Successive items are stored in the class file sequentially, without padding or alignment.
+Tables, consisting of zero or more variable-sized items, are used in several class file structures.
+Although we use C-like array syntax to refer to table items, the fact that tables are streams of varying-sized structures means that it is not possible to translate a table index directly to a byte offset into the table.
+Where we refer to a data structure as an array, it consists of zero or more contiguous fixed-sized items and can be indexed like an array.
+Reference to an ASCII character in this chapter should be interpreted to mean the Unicode code point corresponding to the ASCII character.
+The magic item supplies the magic number identifying the class file format; it has the value 0xCAFEBABE.
+The value of the access_flags item is a mask of flags used to denote access permissions to and properties of this class or interface.
+The interpretation of each flag, when set, is as shown in Table 4.1
+A class may be marked with the ACC_SYNTHETIC flag to indicate that it was generated by a compiler and does not appear in source code.
+The ACC_SUPER flag exists for backward compatibility with code compiled by older compilers for the Java programming language.
+They should be set to zero in generated class files and should be ignored by Java Virtual Machine implementations.
+If the value of the super_class item is zero, then this class file must represent the class Object, the only class or interface without a direct superclass.
+The value of the interfaces_count item gives the number of direct superinterfaces of this class or interface type.
+In the internal form used in descriptors in the class file format, a reference to the name of class Thread is implemented using a CONSTANT_Utf8_info structure representing the string java/lang/Thread.
+A signature is a string representing the generic type of a field or method, or generic type information for a class declaration.
+This grammar is a set of productions that describe how sequences of characters can form syntactically correct descriptors of various types.
+Terminal symbols of the grammar are shown in bold fixed-width font.
+The definition of a nonterminal is introduced by the name of the nonterminal being defined, followed by a colon.
+One or more alternative right-hand sides for the nonterminal then follow on succeeding lines.
+A nonterminal symbol on the right-hand side of a production that is followed by an asterisk (*) represents zero or more possibly different values produced from that nonterminal, appended without any intervening space.
+Similarly, a nonterminal symbol on the right-hand side of a production that is followed by an plus sign (+) represents one or more possibly different values produced from that nonterminal, appended without any intervening space.
+A field descriptor represents the type of a class, instance, or local variable.
+It is a series of characters generated by the grammar:
+The field descriptor of an instance variable of type int is simply I.
+The field descriptor of an instance variable of type Object is Ljava/lang/Object;
+Note that the internal form of the binary name for class Object is used.
+A method descriptor represents the parameters that the method takes and the value that it returns:
+A parameter descriptor represents a parameter passed to a method:
+A return descriptor represents the type of the value returned from a method.
+It is a series of characters generated by the grammar:
+The character V indicates that the method returns no value (its return type is void)
+A method descriptor is valid only if it represents method parameters with a total length of 255 or less, where that length includes the contribution for this in the case of instance or interface method invocations.
+The total length is calculated by summing the contributions of the individual parameters, where a parameter of type long or double contributes two units to the length and a parameter of any other type contributes one unit.
+Note that the internal forms of the binary names of Thread and Object are used.
+Signatures are used to encode Java programming language type information that is not part of the Java Virtual Machine type system, such as generic type and method declarations and parameterized types.
+This kind of type information is needed to support reflection and debugging, and by a Java compiler.
+A formal type parameter is described by its name, followed by its class and interface bounds.
+If the class bound does not specify a type, it is taken to be Object.
+A class type signature gives complete type information for a class or interface type.
+The class type signature must be formulated such that it can be reliably mapped.
+A Java compiler must output generic signature information for any class, interface, constructor or member whose generic signature in the Java programming language would include references to type variables or parameterized types.
+Oracle's Java Virtual Machine implementation does not check the well-formedness of the signatures described in this subsection during loading or linking.
+Future versions of a Java Virtual Machine implementation may be required to perform some or all of these checks during loading or linking.
+Java Virtual Machine instructions do not rely on the run-time layout of classes, interfaces, class instances, or arrays.
+Instead, instructions refer to symbolic information in the constant_pool table.
+The contents of the info array vary with the value of tag.
+The valid tags and their values are listed in Table 4.3
+Each tag byte must be followed by two or more bytes giving information about the specific constant.
+The format of the additional information varies with the tag value.
+For such array classes, the name of the class is the descriptor of the array type.
+For example, the class name representing a two-dimensional int array type.
+The class name representing the type array of class Thread.
+An array type descriptor is valid only if it represents 255 or fewer dimensions.
+Fields, methods, and interface methods are represented by similar structures:
+If bits is 0x7f800000, the float value will be positive infinity.
+If bits is 0xff800000, the float value will be negative infinity.
+In all other cases, let s, e, and m be three values that might be computed from bits:
+In retrospect, making 8-byte constants take two constant pool entries was a poor choice.
+In all other cases, let s, e, and m be three values that might be computed from bits:
+The CONSTANT_Utf8_info structure is used to represent constant string values:
+The value of the length item gives the number of bytes in the bytes array (not the length of the resulting string)
+Modified UTF-8 strings are encoded so that code point sequences that contain only non-null ASCII characters can be.
+The 7 bits of data in the byte give the value of the code point represented.
+The three bytes represent the code point with the value:
+Characters with code points above U+FFFF (so-called supplementary characters) are represented by separately encoding the two surrogate code units of their UTF-16 representation.
+Each of the surrogate code units is represented by three bytes.
+This means supplementary characters are represented by six bytes, u, v, w, x, y, and z :
+The six bytes represent the code point with the value:
+The bytes of multibyte characters are stored in the class file in big-endian (high byte first) order.
+There are two differences between this format and the "standard" UTF-8 format.
+The value of the access_flags item is a mask of flags used to denote access permission to and properties of this field.
+The interpretation of each flag, when set, is as shown in Table 4.4
+A field may be marked with the ACC_SYNTHETIC flag to indicate that it was generated by a compiler and does not appear in source code.
+The value of the access_flags item is a mask of flags used to denote access permission to and properties of this method.
+The interpretation of each flag, when set, is as shown in Table 4.5
+The ACC_VARARGS flag indicates that this method takes a variable number of arguments at the source code level.
+The ACC_BRIDGE flag is used to indicate a bridge method generated by a Java compiler.
+They should be set to zero in generated class files and should be ignored by Java Virtual Machine implementations.
+Certain attributes are predefined as part of the class file specification.
+They are listed in Table 4.6, accompanied by the version of the Java SE platform and the version of the class file format in which each first appeared.
+Within the context of their use in this specification, that is, in the attributes tables of the class file structures in which they appear, the names of these predefined attributes are reserved.
+The ConstantValue, Code and Exceptions attributes must be recognized and.
+Use of the remaining predefined attributes is optional; a class file reader may use the information they contain, or otherwise must silently ignore those attributes.
+Compilers are permitted to define and emit class files containing new attributes in the attributes tables of class file structures.
+Java Virtual Machine implementations are permitted to recognize and use new attributes found in the attributes tables of class file structures.
+However, any attribute not defined as part of this Java Virtual Machine specification must not affect the semantics of class or interface types.
+Java Virtual Machine implementations are required to silently ignore attributes they do not recognize.
+For instance, defining a new attribute to support vendor-specific debugging is permitted.
+Because Java Virtual Machine implementations are required to ignore attributes they do not recognize, class files intended for that particular Java Virtual Machine implementation will be usable by other implementations even if those implementations cannot make use of the additional debugging information that the class files contain.
+If a field_info structure representing a non-static field has a ConstantValue attribute, then that attribute must silently be ignored.
+The constant_pool entry at that index gives the constant value represented by this attribute.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the code_length item gives the number of bytes in the code array for this method.
+The value of code_length must be greater than zero; the code array must not be empty.
+The value of start_pc must be a valid index into the code array of the opcode of an instruction.
+A compiler writer can work around this bug by limiting the maximum size of the generated Java Virtual Machine code for any method, instance initialization method, or static initializer (the size of any code array) to 65534 bytes.
+The value of the handler_pc item indicates the start of the exception handler.
+The value of the item must be a valid index into the code array and must be the index of the opcode of an instruction.
+The value of the attributes_count item indicates the number of attributes of the Code attribute.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+Each stack_map_frame structure specifies the type state at a particular bytecode offset.
+Each frame type specifies (explicitly or implicitly) a value, offset_delta, that is used to calculate the actual bytecode offset at which a frame applies.
+By using an offset delta rather than the actual bytecode offset we ensure, by definition, that stack map frames are in the correctly sorted order.
+We say that an instruction in the bytecode has a corresponding stack map frame if the instruction starts at offset i in the code array of a Code attribute, and the Code attribute has a StackMapTable attribute whose entries array has a stack_map_frame structure that applies at bytecode offset i.
+The stack_map_frame structure consists of a one-byte tag followed by zero or more bytes, giving more information, depending upon the tag.
+A stack map frame may belong to one of several frame types:
+Tags in the range [128-246] are reserved for future use.
+It is an error if, for any index i, locals[i] represents a local variable whose index is greater than the maximum number of local variables for the method.
+It is an error if, for any index i, stack[i] represents a stack entry whose index is greater than the maximum operand stack size for the method.
+The Top_variable_info type indicates that the local variable has the verification type top.
+The Long_variable_info type indicates that the location contains the verification type long.
+The Null_variable_info type indicates that location contains the verification type null.
+The value of the attribute_length item indicates the attribute length, excluding the initial six bytes.
+A method should throw an exception only if at least one of the following three criteria is met:
+The exception is an instance of RuntimeException or one of its subclasses.
+The exception is an instance of Error or one of its subclasses.
+These requirements are not enforced in the Java Virtual Machine; they are enforced only at compile-time.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the number_of_classes item indicates the number of entries in the classes array.
+If a class has members that are classes or interfaces, its constant_pool table (and hence its InnerClasses attribute) must refer to each such member, even if that member is not otherwise mentioned by the class.
+These rules imply that a nested class or interface member will have InnerClasses information for each enclosing class and for each immediate member.
+It is used by a compiler to recover the original information when source code is not available.
+They should be set to zero in generated class files and should be ignored by Java Virtual Machine implementations.
+Oracle's Java Virtual Machine implementation does not check the consistency of an InnerClasses attribute against a class file representing a class or interface referenced by the attribute.
+It is the responsibility of a Java compiler to ensure that the method identified via the method_index is indeed the closest lexically enclosing method of the class that contains this EnclosingMethod attribute.
+The Synthetic attribute was introduced in JDK release 1.1 to support nested classes and interfaces.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the start_pc item must indicate the index into the code array at which the code for a new line in the original source file begins.
+The value of the line_number item must give the corresponding line number in the original source file.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+It also indicates the index into the local variable array of the current frame at which that local variable can be found.
+Each entry must contain the following five items: start_pc, length.
+The value of start_pc must be a valid index into the code array of this Code attribute and must be the index of the opcode of an instruction.
+The value of start_pc + length must either be a valid index into the code array of this Code attribute and be the index of the opcode of an instruction, or it must be the first index beyond the end of that code array.
+The given local variable must be at index in the local variable array of the current frame.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+It also indicates the index into the local variable array of the current frame at which that local variable can be found.
+Each entry must contain the following five items: start_pc, length.
+The value of start_pc must be a valid index into the code array of this Code attribute and must be the index of the opcode of an instruction.
+The value of start_pc + length must either be a valid index into the code array of this Code attribute and be the index of the opcode of an instruction, or it must be the first index beyond the end of that code array.
+The given local variable must be at index in the local variable array of the current frame.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item is thus dependent on the number of run-time-visible annotations represented by the structure, and their values.
+The value of the num_annotations item gives the number of run-time-visible annotations represented by the structure.
+Note that a maximum of 65535 run-time-visible Java programming language annotations may be directly attached to a program element.
+Each value of the annotations table represents a single run-time-visible annotation on a program element.
+Note that a maximum of 65535 element-value pairs may be contained in a single annotation.
+The element_value structure is a discriminated union representing the value of an element-value pair.
+The value item represents the value of this annotation element.
+The tag item, above, determines which item of the union is to be used: const_value_index.
+The enum_const_value item is used if the tag item is e.
+Note that a maximum of 65535 elements are permitted in an array-typed element value.
+Each value of the values table gives the value of an element of the array-typed value represented by this element_value structure.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item is thus dependent on the number of run-time-invisible annotations represented by the structure, and their values.
+The value of the num_annotations item gives the number of run-time-invisible annotations represented by the structure.
+Note that a maximum of 65535 run-time-invisible Java programming language annotations may be directly attached to a program element.
+Each value of the annotations table represents a single run-time-invisible annotation on a program element.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item is thus dependent on the number of parameters, the number of run-time-visible annotations on each parameter, and their values.
+The sequence of values in the table corresponds to the sequence of parameters in the method descriptor.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item is thus dependent on the number of parameters, the number of run-time-invisible annotations on each parameter, and their values.
+The sequence of values in the table corresponds to the sequence of parameters in the method descriptor.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item is thus dependent on the default value.
+The default_value item represents the default value of the annotation type element whose default value is represented by this AnnotationDefault attribute.
+The value of the attribute_length item indicates the length of the attribute, excluding the initial six bytes.
+The value of the attribute_length item is thus dependent on the number of invokedynamic instructions in this ClassFile structure.
+Historically, format checking has been confused with bytecode verification, because both are a form of integrity check.
+The static constraints on a class file are those defining the well-formedness of the file.
+With the exception of the static constraints on the Java Virtual Machine code of the class file, these constraints have been given in the previous sections.
+The static constraints on the Java Virtual Machine code in a class file specify how Java Virtual Machine instructions must be laid out in the code array and what the operands of individual instructions must be.
+The static constraints on the instructions in the code array are as follows:
+For each instruction in the code array except the last, the index of the opcode of the next instruction equals the index of the opcode of the current instruction plus the length of that instruction, including all its operands.
+The wide instruction is treated like any other instruction for these purposes; the opcode specifying the operation that a wide instruction is to modify is treated as one of the operands of that wide instruction.
+That opcode must never be directly reachable by the computation.
+The static constraints on the operands of instructions in the code array are as follows:
+The target of a jump or branch instruction must never be the opcode used to specify the operation to be modified by a wide instruction; a jump or branch target may be the wide instruction itself.
+Each target, including the default, of each tableswitch instruction must be the opcode of an instruction within this method.
+Each tableswitch instruction must have a number of entries in its jump table that is consistent with the value of its low and high jump table operands, and its low value must be less than or equal to its high value.
+No target of a tableswitch instruction may be the opcode used to specify the operation to be modified by a wide instruction; a tableswitch target may be a wide instruction itself.
+Each target, including the default, of each lookupswitch instruction must be the opcode of an instruction within this method.
+Each lookupswitch instruction must have a number of match-offset pairs that is consistent with the value of its npairs operand.
+The match-offset pairs must be sorted in increasing numerical order by signed match value.
+No target of a lookupswitch instruction may be the opcode used to specify the operation to be modified by a wide instruction; a lookupswitch target may be a wide instruction itself.
+In addition, the subsequent constant pool index must also be a valid index into the constant pool, and the constant pool entry at that index must not be used.
+The operands of each getfield, putfield, getstatic, and putstatic instruction must represent a valid index into the constant_pool table.
+The constant pool entry referenced by that index must be of type CONSTANT_Fieldref.
+The indexbyte operands of each invokevirtual, invokespecial, and invokestatic instruction must represent a valid index into the constant_pool table.
+The constant pool entry referenced by that index must be of type CONSTANT_Methodref.
+The indexbyte operands of each invokedynamic instruction must represent a valid index into the constant_pool table.
+The third and fourth operand bytes of each invokedynamic instruction must have the value zero.
+The indexbyte operands of each invokeinterface instruction must represent a valid index into the constant_pool table.
+The fourth operand byte of each invokeinterface instruction must have the value zero.
+The operands of each instanceof, checkcast, new, and anewarray instruction and the indexbyte operands of each multianewarray instruction must represent a valid index into the constant_pool table.
+The constant pool entry referenced by that index must be of type CONSTANT_Class.
+No anewarray instruction may be used to create an array of more than 255 dimensions.
+The new instruction cannot be used to create an array.
+A multianewarray instruction must be used only to create an array of a type that has at least as many dimensions as the value of its dimensions operand.
+That is, while a multianewarray instruction is not required to create all of the dimensions of the array type referenced by its indexbyte operands, it must not attempt to create more dimensions than are in the array type.
+The dimensions operand of each multianewarray instruction must not be zero.
+The structural constraints on the code array specify constraints on relationships between Java Virtual Machine instructions.
+Each instruction must only be executed with the appropriate type and number of arguments in the operand stack and local variable array, regardless of the execution path that leads to its invocation.
+At no point during execution can the order of the local variable pair holding a value of type long or double be reversed or the pair split up.
+At no point can the local variables of such a pair be operated on individually.
+No local variable (or local variable pair, in the case of a value of type long or double) can be accessed before it is assigned a value.
+At no point during execution can more values be popped from the operand stack than it contains.
+If an invokespecial instruction names an instance initialization method from a class that is not the current class or a superclass, and the target reference on the operand stack is a class instance created by an earlier new instruction, then invokespecial must name an instance initialization method from the class of that class instance.
+When any instance method is invoked or when any instance variable is accessed, the class instance that contains the instance method or instance variable must already be initialized.
+There must never be an uninitialized class instance on the operand stack or in a local variable when a jsr or jsr_w instruction is executed.
+All instance initialization methods, class or interface initialization methods, and methods declared to return void must use only the return instruction.
+If getfield or putfield is used to access a protected field declared in a superclass that is a member of a different run-time package than the current class, then the type of the class instance being accessed must be the same as or a subclass of the current class.
+If invokevirtual or invokespecial is used to access a protected method declared in a superclass that is a member of a different run-time package than the current.
+The type of every value stored into an array by an aastore instruction must be a reference type.
+The component type of the array being stored into by the aastore instruction must also be a reference type.
+Each athrow instruction must throw only values that are instances of class Throwable or of subclasses of Throwable.
+Each class mentioned in a catch_type item of a method's exception table must be Throwable or a subclass of Throwable.
+Execution never falls off the bottom of the code array.
+No return address (a value of type returnAddress) may be loaded from a local.
+The instruction following each jsr or jsr_w instruction may be returned to only.
+No jsr or jsr_w instruction that is returned to may be used to recursively call.
+Subroutines can be nested when using try-finally constructs from within a finally clause.
+Each instance of type returnAddress can be returned to at most once.
+If a ret instruction returns to a point in the subroutine call chain above the ret instruction corresponding to a given instance of type returnAddress, then that instance can never be used as a return address.
+Even though a compiler for the Java programming language must only produce class files that satisfy all the static and structural constraints in the previous sections, the Java Virtual Machine has no guarantee that any file it is asked to load was generated by that compiler or is properly formed.
+Applications such as web browsers do not download source code, which they then compile; these applications download already-compiled class files.
+The browser needs to determine whether the class file was produced by a trustworthy compiler or by an adversary attempting to exploit the Java Virtual Machine.
+But the definition of TradingClass might have changed since the time the class was compiled in a way that is not compatible with pre-existing binaries.
+Methods might have been deleted or had their return types or modifiers changed.
+Fields might have changed types or changed from instance variables to class variables.
+The access modifiers of a method or variable may have changed from public to private.
+Checking that all field references and method references in the constant pool have valid names, valid classes, and a valid type descriptor.
+Note that these checks do not ensure that the given field or method actually exists in the given class, nor do they check that the type descriptors given refer to real classes.
+More detailed checking is performed when the bytecodes themselves are verified, and during resolution.
+There are two strategies that Java Virtual Machine implementations may use for verification:
+Verification by type checking must be used to verify class files whose version number is greater than or equal to 50.0
+Verification by type inference must be supported by all Java Virtual Machine implementations, except those conforming to the Java ME CLDC and Java Card profiles, in order to verify class files whose version number is less than 50.0
+This is a pragmatic adjustment, designed to ease the transition to the new verification discipline.
+Many tools that manipulate class files may alter the bytecodes of a method in a manner that requires adjustment of the method's stack map frames.
+If a tool does not make the necessary adjustments to the stack map frames, type checking may fail even.
+To allow implementors time to adapt their tools, Java Virtual Machine implementations may fall back to the older verification discipline, but only for a limited time.
+In cases where type checking fails but type inference is invoked and succeeds, a certain performance penalty is expected.
+It also should serve as a signal to tool vendors that their output needs to be adjusted, and provides vendors with additional incentive to make these adjustments.
+If a Java Virtual Machine implementation ever attempts to perform verification by type inference on version 50.0 class files, it must do so in all cases where verification by type checking fails.
+This means that a Java Virtual Machine implementation cannot choose to resort to type inference in once case and not in another.
+It must either reject class files that do not verify via type checking, or else consistently failover to the type inferencing verifier whenever type checking fails.
+The Prolog predicate classIsTypeSafe assumes that Class is a Prolog term representing a binary class that has been successfully parsed and loaded.
+This specification does not mandate the precise structure of this term, but does require that certain predicates be defined upon it.
+Iff the predicate classIsTypeSafe is not true, the type checker must throw the exception VerifyError to indicate that the class file is malformed.
+Otherwise, the class file has type checked successfully and bytecode verification has completed successfully.
+The rest of this section explains the process of type checking in detail:
+We stipulate the existence of 22 Prolog predicates ("accessors") that have certain expected behavior but whose formal definitions are not given in this specification.
+Extracts the instruction stream, ParsedCode, of the method Method in Class, as well as the maximum operand stack size, MaxStack, the maximal number of local variables, FrameSize, the exception handlers, Handlers, and the stack map StackMap.
+When type checking a method's body, it is convenient to access information about the method.
+For this purpose, we define an environment, a six-tuple consisting of:
+We specify additional predicates to extract higher-level information from the environment.
+Finally, we specify a general predicate used throughout the type rules:
+The principle guiding the determination as to which accessors are stipulated and which are fully specified is that we do not want to over-specify the representation of the class file.
+Providing specific accessors to the Class or Method term would force us to completely specify the format for a Prolog term representing the class file.
+The verification types which are not reference types in the Java programming language have subtype rules of the form:
+That is, v is a subtype of X if the direct supertype of v is a subtype of X.
+These subtype rules are not necessarily the most obvious formulation of subtyping.
+There is a clear split between subtyping rules for reference types in the Java programming language, and rules for the remaining verification types.
+The split allows us to state general subtyping relations between Java programming language reference types and other verification types.
+These relations hold independently of a Java reference type's position in the type hierarchy, and help to prevent excessive class loading by a Java Virtual Machine implementation.
+For example, we do not want to start climbing the Java superclass hierarchy in response to a query of the form class(foo, L) <: twoWord.
+We also have a rule that says subtyping is reflexive, so together these rules cover most verification types that are not reference types in the Java programming language.
+Subtype rules for the reference types in the Java programming language are specified recursively with isJavaAssignable.
+Subtyping between arrays of primitive type is the identity relation.
+Individual bytecode instructions are represented in Prolog as terms whose functor is the name of the instruction and whose arguments are its parsed operands.
+For example, an aload instruction is represented as the term aload(N), which includes the index N that is the operand of the instruction.
+The instructions as a whole are represented as a list of terms of the form:
+Stack map frames are represented in Prolog as a list of terms of the form:
+The order of stack map frames in this list must be the same as in the class file.
+Locals is a list of verification types, such that the Nth element of the list (with 0-based indexing) represents the type of local variable N.
+If any local variable in Locals has the type uninitializedThis, then Flags has the single element flagThisUninit, otherwise it is an empty list.
+OperandStack is a list of types, such that the first element represents the type of the top of the operand stack, and the elements below the top follow in the appropriate order.
+Types of size 2 (long and double) are represented by two entries, with the first entry being top and the second one being the type itself.
+For example, a stack with a double, an int, and a long would be represented as [top, double, int, top, long]
+Other verification types are represented in prolog as atoms whose name denotes the verification type in question.
+Flags is a list which may either be empty or have the single element flagThisUninit.
+This flag is used in constructors, to mark type states where initialization of this has not yet been completed.
+In such type states, it is illegal to return from the method.
+The length of the operand stack must not exceed the declared maximum stack length.
+More precisely, if the logical top of the stack is some subtype of the specified type, Type, then pop it.
+If a type occupies two stack slots, the logical top of stack type is really the type just below the top, and the top of stack is the unusable type top.
+The exact behavior varies with the size of the type.
+If the pushed type is of size 1, we just push it onto the stack.
+If the pushed type is of size 2, we push it, and then push top.
+Push a list of types onto the stack if there is space.
+Popping a logical type of category 2, Type, off the stack is possible if the top of the stack is type top, and the slot directly below it is Type.
+The result is the incoming stack, with the top 2 slots popped off.
+Abstract methods and native methods are considered to be type safe if they do not override a final method.
+Non-abstract, non-native methods are type correct if they have code and the code is type correct.
+A method with code is type safe if it is possible to merge the code and the stack map frames into a single stream such that each stack map frame precedes the instruction it corresponds to, and the merged stream is type correct.
+The method's exception handlers, if any, must also be legal.
+An exception handler is represented by a functor application of the form:
+An exception handler is legal if its start (Start) is less than its end (End), there exists an instruction whose offset is equal to Start, there exists an instruction whose offset equals End, and the handler's exception class is assignable to the class Throwable.
+The exception class of a handler is Throwable if the handler's class entry is 0, otherwise it is the class named in the handler.
+Let us now turn to the stream of instructions and stack map frames.
+Merging instructions and stack map frames into a single stream involves four cases:
+Merging an empty StackMap and a list of instructions yields the original list of.
+Given a list of stack map frames beginning with the type state for the instruction at Offset, and a list of instructions beginning at Offset, the merged list is the head of the stack frame list, followed by the head of the instruction list, followed by the merge of the tails of the two lists.
+Otherwise, given a list of stack frames beginning with the type state for the instruction at OffsetM, and a list of instructions beginning at OffsetP, then, if OffsetP < OffsetM, the merged list consists of the head of the instruction list, followed by the merge of the stack frame list and the tail of the instruction list.
+Since the instruction list has monotonically increasing offsets, the merge of the two lists is not defined unless every stack map frame offset has a corresponding instruction offset and the stack map frames are in monotonically increasing order.
+To determine if the merged stream for a method is type correct, we first infer the method's initial type state.
+The initial type state of a method consists of an empty operand stack and local variable types derived from the type of this and the arguments, as well as the appropriate flag, depending on whether this is an <init> method.
+Given a list of types, the following clause produces a list where every type of size 2 has been substituted by two entries: one for itself, and one top entry.
+The result then corresponds to the representation of the list as 32-bit words in the Java Virtual Machine.
+For the initial type state of an instance method, we compute the type of this and put it in a list.
+For the initial type state of a static method, this is irrelevant, so the list is empty.
+We now compute whether the merged stream for a method is type correct, using the method's initial type state:
+If we have a stack map frame and an incoming type state, the type state must be.
+We may then proceed to type check the rest of the stream with the type state given in the stack map.
+A merged code stream is type safe relative to an incoming type state T if it begins with an instruction I that is type safe relative to T, and I satisfies its exception handlers (see below), and the tail of the stream is type safe given the type state following that execution of I.
+For an unconditional branch instruction, it will have the special value afterGoto.
+After an unconditional branch (indicated by an incoming type state of afterGoto), if we have a stack map giving the type state for the following instructions, we can proceed and type check them using the type state provided by the stack map.
+It is illegal to have code after an unconditional branch without a stack map frame being provided for it.
+If we have an unconditional branch at the end of the code, stop.
+Branching to a target is type safe if the target has an associated stack frame, Frame, and the current stack frame, StackFrame, is assignable to Frame.
+An instruction satisfies its exception handlers if it satisfies every exception handler that is applicable to the instruction.
+An exception handler is applicable to an instruction if the offset of the instruction is greater or equal to the start of the handler's range and less than the end of the handler's range.
+An instruction satisfies an exception handler if its incoming type state is StackFrame, and the handler's target (the initial instruction of the handler code) is type safe assuming an incoming type state T.
+The type state T is derived from StackFrame by replacing the operand stack with a stack whose sole element is the handler's exception class.
+All store instructions are variations on a common pattern, varying the type of the value that the instruction stores.
+Given local variables Locals, modifying Index to have type Type results in the local variable list NewLocals.
+The modifications are somewhat involved, because some values (and their corresponding types) occupy two local variables.
+Given LocalsRest, the suffix of the local variable list starting at index I, modifying local variable Index to have type Type results in the local variable list suffix NextLocalsRest.
+If I = Index-1, the type of local I may change.
+Once we set LI+1 to the new type (and the corresponding value), the type/value of LI will be invalidated, as its upper half will be trashed.
+When we find the variable, and it only occupies one word, we change it to Type and we're done.
+When we find the variable, and it occupies two words, we change its type to Type and the next word to top.
+We refer to a local whose index immediately precedes a local whose type will be modified as a pre-index variable.
+The future type of a pre-index variable of type InputType is Result.
+If the type, Type, of the pre-index local is of size 1, it doesn't change.
+If the type of the pre-index local, Type, is 2, we need to mark the lower half of its two word value as unusable, by setting its type to top.
+If the MemberClassName is the same as the name of a superclass, the class being resolved may indeed be a superclass.
+In this case, if no superclass named MemberClassName in a different run-time package has a protected member named MemberName with descriptor MemberDescriptor, the protected check does not apply.
+This is because the actual class being resolved will either be one of these superclasses, in which case we know that it is either in the same run-time package, and the access is legal; or the member in question is not protected and the check does not apply; or it will be a subclass, in which case the check would succeed anyway; or it will be some other class in the same run-time package, in which case the access is legal and the check need not take place; or the verifier need not flag this as a problem, since it will be caught anyway because resolution will per force fail.
+If there does exist a protected superclass member in a different run-time package, then load MemberClassName; if the member in question is not protected, the check does not apply.
+Using a superclass member that is not protected is trivially correct.
+Otherwise, use of a member of an object of type Target requires that Target be assignable to the type of the current class.
+The type state after an instruction completes abruptly is the same as the incoming type state, except that the operand stack is empty.
+Many instructions have type rules that are completely isomorphic to the rules for other instructions.
+The English language description of each rule is intended to be readable, intuitive, and concise.
+As such, the description avoids repeating all the contextual assumptions given above.
+When the description speaks of the operand stack or local variables in the.
+The type state after the instruction completes abruptly is almost always identical to the incoming type state.
+The description only discusses the type state after the instruction completes abruptly when that is not the case.
+The description speaks of popping and pushing types onto the operand stack, and does not explicitly discuss issues of stack underflow or overflow.
+The description assumes these operations can be completed successfully, but the Prolog clauses for operand stack manipulation ensure that the necessary checks are made.
+The description abstracts from these representation details, but the Prolog clauses that manipulate data do not.
+Any ambiguities can be resolved by referring to the formal Prolog clauses.
+An aaload instruction is type safe iff one can validly replace types matching int and an array type with component type ComponentType where ComponentType is a subtype of Object, with ComponentType yielding the outgoing type state.
+The component type of an array of X is X.
+We define the component type of null to be null.
+An aastore instruction is type safe iff one can validly pop types matching Object, int, and an array of Object off the incoming operand stack yielding the outgoing type state.
+An aconst_null instruction is type safe if one can validly push the type null onto the incoming operand stack yielding the outgoing type state.
+An aload instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a load instruction with operand Index and type reference is type safe and yields an outgoing type state NextStackFrame.
+An anewarray instruction with operand CP is type safe iff CP refers to a constant pool entry denoting either a class type or an array type, and one can legally replace a type matching int on the incoming operand stack with an array with component type CP yielding the outgoing type state.
+An areturn instruction is type safe iff the enclosing method has a declared return type, ReturnType, that is a reference type, and one can validly pop a type matching ReturnType off the incoming operand stack.
+An arraylength instruction is type safe iff one can validly replace an array type on the incoming operand stack with the type int yielding the outgoing type state.
+An astore instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a store instruction with operand Index and type reference is type safe and yields an outgoing type state NextStackFrame.
+An athrow instruction is type safe iff the top of the operand stack matches Throwable.
+A baload instruction is type safe iff one can validly replace types matching int and a small array type on the incoming operand stack with int yielding the outgoing type state.
+An array type is a small array type if it is an array of byte, an array of boolean, or a subtype thereof (null)
+A bastore instruction is type safe iff one can validly pop types matching int, int and a small array type off the incoming operand stack yielding the outgoing type state.
+A bipush instruction is type safe iff the equivalent sipush instruction is type safe.
+A caload instruction is type safe iff one can validly replace types matching int and array of char on the incoming operand stack with int yielding the outgoing type state.
+A castore instruction is type safe iff one can validly pop types matching int, int and array of char off the incoming operand stack yielding the outgoing type state.
+A checkcast instruction with operand CP is type safe iff CP refers to a constant pool entry denoting either a class or an array, and one can validly replace the type Object on top of the incoming operand stack with the type denoted by CP yielding the outgoing type state.
+A d2f instruction is type safe if one can validly pop double off the incoming operand stack and replace it with float, yielding the outgoing type state.
+A d2i instruction is type safe if one can validly pop double off the incoming operand stack and replace it with int, yielding the outgoing type state.
+A d2l instruction is type safe if one can validly pop double off the incoming operand stack and replace it with long, yielding the outgoing type state.
+A dadd instruction is type safe iff one can validly replace types matching double and double on the incoming operand stack with double yielding the outgoing type state.
+A daload instruction is type safe iff one can validly replace types matching int and array of double on the incoming operand stack with double yielding the outgoing type state.
+A dastore instruction is type safe iff one can validly pop types matching double, int and array of double off the incoming operand stack yielding the outgoing type state.
+A dcmpg instruction is type safe iff one can validly replace types matching double and double on the incoming operand stack with int yielding the outgoing type state.
+A dcmpl instruction is type safe iff the equivalent dcmpg instruction is type safe.
+A dconst_0 instruction is type safe if one can validly push the type double onto the incoming operand stack yielding the outgoing type state.
+A ddiv instruction is type safe iff the equivalent dadd instruction is type safe.
+A dload instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a load instruction with operand Index and type double is type safe and yields an outgoing type state NextStackFrame.
+A dmul instruction is type safe iff the equivalent dadd instruction is type safe.
+A dneg instruction is type safe iff there is a type matching double on the incoming operand stack.
+A drem instruction is type safe iff the equivalent dadd instruction is type safe.
+A dreturn instruction is type safe if the enclosing method has a declared return type of double, and one can validly pop a type matching double off the incoming operand stack.
+A dstore instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a store instruction with operand Index and type double is type safe and yields an outgoing type state NextStackFrame.
+A dsub instruction is type safe iff the equivalent dadd instruction is type safe.
+A dup instruction is type safe iff one can validly replace a category 1 type, Type, with the types Type, Type, yielding the outgoing type state.
+An f2d instruction is type safe if one can validly pop float off the incoming operand stack and replace it with double, yielding the outgoing type state.
+An f2i instruction is type safe if one can validly pop float off the incoming operand stack and replace it with int, yielding the outgoing type state.
+An f2l instruction is type safe if one can validly pop float off the incoming operand stack and replace it with long, yielding the outgoing type state.
+An fadd instruction is type safe iff one can validly replace types matching float and float on the incoming operand stack with float yielding the outgoing type state.
+An faload instruction is type safe iff one can validly replace types matching int and array of float on the incoming operand stack with float yielding the outgoing type state.
+An fastore instruction is type safe iff one can validly pop types matching float, int and array of float off the incoming operand stack yielding the outgoing type state.
+An fcmpg instruction is type safe iff one can validly replace types matching float and float on the incoming operand stack with int yielding the outgoing type state.
+An fcmpl instruction is type safe iff the equivalent fcmpg instruction is type safe.
+An fconst_0 instruction is type safe if one can validly push the type float onto the incoming operand stack yielding the outgoing type state.
+The rules for the other variants of fconst are equivalent.
+An fdiv instruction is type safe iff the equivalent fadd instruction is type safe.
+An fload instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a load instruction with operand Index and type float is type safe and yields an outgoing type state NextStackFrame.
+An fmul instruction is type safe iff the equivalent fadd instruction is type safe.
+An fneg instruction is type safe iff there is a type matching float on the incoming operand stack.
+An frem instruction is type safe iff the equivalent fadd instruction is type safe.
+An freturn instruction is type safe if the enclosing method has a declared return type of float, and one can validly pop a type matching float off the incoming operand stack.
+An fstore instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a store instruction with operand Index and type float is type safe and yields an outgoing type state NextStackFrame.
+An fsub instruction is type safe iff the equivalent fadd instruction is type safe.
+A getstatic instruction with operand CP is type safe iff CP refers to a constant pool entry denoting a field whose declared type is FieldType, and one can validly push FieldType on the incoming operand stack yielding the outgoing type state.
+A goto instruction is type safe iff its target operand is a valid branch target.
+A goto_w instruction is type safe iff the equivalent goto instruction is type safe.
+An i2b instruction is type safe iff the equivalent ineg instruction is type safe.
+An i2c instruction is type safe iff the equivalent ineg instruction is type safe.
+An i2d instruction is type safe if one can validly pop int off the incoming operand stack and replace it with double, yielding the outgoing type state.
+An i2f instruction is type safe if one can validly pop int off the incoming operand stack and replace it with float, yielding the outgoing type state.
+An i2l instruction is type safe if one can validly pop int off the incoming operand stack and replace it with long, yielding the outgoing type state.
+An i2s instruction is type safe iff the equivalent ineg instruction is type safe.
+An iadd instruction is type safe iff one can validly replace types matching int and int on the incoming operand stack with int yielding the outgoing type state.
+An iaload instruction is type safe iff one can validly replace types matching int and array of int on the incoming operand stack with int yielding the outgoing type state.
+An iand instruction is type safe iff the equivalent iadd instruction is type safe.
+An iastore instruction is type safe iff one can validly pop types matching int, int and array of int off the incoming operand stack yielding the outgoing type state.
+An if_acmpeq instruction is type safe iff one can validly pop types matching reference and reference on the incoming operand stack yielding the outgoing type state NextStackFrame, and the operand of the instruction, Target, is a valid branch target assuming an incoming type state of NextStackFrame.
+An if_icmpeq instruction is type safe iff one can validly pop types matching int and int on the incoming operand stack yielding the outgoing type state NextStackFrame, and the operand of the instruction, Target, is a valid branch target assuming an incoming type state of NextStackFrame.
+The rules for all other variants of the if_icmp<cond> instruction are identical.
+An ifeq instruction is type safe iff one can validly pop a type matching int off the incoming operand stack yielding the outgoing type state NextStackFrame, and the operand of the instruction, Target, is a valid branch target assuming an incoming type state of NextStackFrame.
+The rules for all other variations of the if<cond> instruction are identical.
+An ifnonnull instruction is type safe iff one can validly pop a type matching reference off the incoming operand stack yielding the outgoing type state NextStackFrame, and the operand of the instruction, Target, is a valid branch target assuming an incoming type state of NextStackFrame.
+An ifnull instruction is type safe iff the equivalent ifnonnull instruction is type safe.
+An iinc instruction with first operand Index is type safe iff LIndex has type int.
+An iload instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a load instruction with operand Index and type int is type safe and yields an outgoing type state NextStackFrame.
+An imul instruction is type safe iff the equivalent iadd instruction is type safe.
+An ineg instruction is type safe iff there is a type matching int on the incoming operand stack.
+An instanceof instruction with operand CP is type safe iff CP refers to a constant pool entry denoting either a class or an array, and one can validly replace the type Object on top of the incoming operand stack with type int yielding the outgoing type state.
+An invokedynamic instruction is type safe iff all of the following conditions hold:
+Its first operand, CP, refers to a constant pool entry denoting an dynamic call site.
+One can validly replace types matching the argument types given in Descriptor on the incoming operand stack with the return type given in Descriptor, yielding the outgoing type state.
+An invokeinterface instruction is type safe iff all of the following conditions hold:
+Its first operand, CP, refers to a constant pool entry denoting an interface method.
+Its second operand, Count, is a valid count operand (see below)
+One can validly replace types matching the type MethodIntfName and the.
+The Count operand of an invokeinterface instruction is valid if it equals the size of the arguments to the instruction.
+This is equal to the difference between the size of InputFrame and OutputFrame.
+An invokespecial instruction is type safe iff all of the following conditions hold:
+Its first operand, CP, refers to a constant pool entry denoting a method.
+One can validly replace types matching the class MethodClassName and the argument types given in Descriptor on the incoming operand stack with the return type given in Descriptor.
+One can validly pop types matching the argument types given in Descriptor and an uninitialized type, UninitializedArg, off the incoming operand stack, yielding OperandStack.
+The outgoing type state is derived from the incoming type state by first replacing the incoming operand stack with OperandStack and then replacing all instances of UninitializedArg with the type of instance being initialized.
+To compute what type the uninitialized argument's type needs to be rewritten to, there are two cases:
+If we are initializing an object within its constructor, its type is initially uninitializedThis.
+This type will be rewritten to the type of the class of the <init> method.
+The second case arises from initialization of an object created by new.
+The uninitialized arg type is rewritten to MethodClass, the type of the method holder of <init>
+We check whether there really is a new instruction at Address.
+The rule for invokespecial of an <init> method is the sole motivation for passing back a distinct exception stack frame.
+The concern is that invokespecial can cause a superclass <init> method to be invoked, and that invocation could fail, leaving this uninitialized.
+This situation cannot be created using source code in the Java programming language, but can be created by programming in bytecode directly.
+The original frame holds an uninitialized object in a local and has flag uninitializedThis.
+Normal termination of invokespecial initializes the uninitialized object and turns off the uninitializedThis flag.
+But if the invocation of an <init> method throws an exception, the uninitialized object might be left in a partially initialized state, and needs to be made permanently unusable.
+This is represented by an exception frame containing the broken object (the new value of the local) and the uninitializedThis flag (the old flag)
+If not for this case, the exception stack frame could be the same as the input stack frame.
+An invokestatic instruction is type safe iff all of the following conditions hold:
+Its first operand, CP, refers to a constant pool entry denoting a method named MethodName with descriptor Descriptor.
+One can validly replace types matching the argument types given in Descriptor on the incoming operand stack with the return type given in Descriptor, yielding the outgoing type state.
+An invokevirtual instruction is type safe iff all of the following conditions hold:
+Its first operand, CP, refers to a constant pool entry denoting a method.
+One can validly replace types matching the class MethodClassName and the argument types given in Descriptor on the incoming operand stack with the return type given in Descriptor, yielding the outgoing type state.
+An ior instruction is type safe iff the equivalent iadd instruction is type safe.
+An irem instruction is type safe iff the equivalent iadd instruction is type safe.
+An ireturn instruction is type safe if the enclosing method has a declared return type of int, and one can validly pop a type matching int off the incoming operand stack.
+An ishl instruction is type safe iff the equivalent iadd instruction is type safe.
+An ishr instruction is type safe iff the equivalent iadd instruction is type safe.
+An istore instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a store instruction with operand Index and type int is type safe and yields an outgoing type state NextStackFrame.
+An isub instruction is type safe iff the equivalent iadd instruction is type safe.
+An iushr instruction is type safe iff the equivalent iadd instruction is type safe.
+An ixor instruction is type safe iff the equivalent iadd instruction is type safe.
+An l2d instruction is type safe if one can validly pop long off the incoming operand stack and replace it with double, yielding the outgoing type state.
+An l2f instruction is type safe if one can validly pop long off the incoming operand stack and replace it with float, yielding the outgoing type state.
+An l2i instruction is type safe if one can validly pop long off the incoming operand stack and replace it with int, yielding the outgoing type state.
+An ladd instruction is type safe iff one can validly replace types matching long and long on the incoming operand stack with long yielding the outgoing type state.
+An laload instruction is type safe iff one can validly replace types matching int and array of long on the incoming operand stack with long yielding the outgoing type state.
+An land instruction is type safe iff the equivalent ladd instruction is type safe.
+An lastore instruction is type safe iff one can validly pop types matching long, int and array of long off the incoming operand stack yielding the outgoing type state.
+A lcmp instruction is type safe iff one can validly replace types matching long and long on the incoming operand stack with int yielding the outgoing type state.
+An lconst_0 instruction is type safe if one can validly push the type long onto the incoming operand stack yielding the outgoing type state.
+An ldc_w instruction is type safe iff the equivalent ldc instruction is type safe.
+An ldc2_w instruction with operand CP is type safe iff CP refers to a constant pool entry denoting an entity of type Tag, where Tag is either long or double, and one can validly push Tag onto the incoming operand stack yielding the outgoing type state.
+An ldiv instruction is type safe iff the equivalent ladd instruction is type safe.
+An lload instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a load instruction with operand Index and type long is type safe and yields an outgoing type state NextStackFrame.
+An lmul instruction is type safe iff the equivalent ladd instruction is type safe.
+An lneg instruction is type safe iff there is a type matching long on the incoming operand stack.
+A lookupswitch instruction is type safe if its keys are sorted, one can validly pop int off the incoming operand stack yielding a new type state BranchStackFrame, and all of the instruction's targets are valid branch targets assuming BranchStackFrame as their incoming type state.
+A lor instruction is type safe iff the equivalent ladd instruction is type safe.
+An lrem instruction is type safe iff the equivalent ladd instruction is type safe.
+An lreturn instruction is type safe if the enclosing method has a declared return type of long, and one can validly pop a type matching long off the incoming operand stack.
+An lshl instruction is type safe if one can validly replace the types int and long on the incoming operand stack with the type long yielding the outgoing type state.
+An lshr instruction is type safe iff the equivalent lshl instruction is type safe.
+An lstore instruction with operand Index is type safe and yields an outgoing type state NextStackFrame, if a store instruction with operand Index and type long is type safe and yields an outgoing type state NextStackFrame.
+An lsub instruction is type safe iff the equivalent ladd instruction is type safe.
+An lushr instruction is type safe iff the equivalent lshl instruction is type safe.
+An lxor instruction is type safe iff the equivalent ladd instruction is type safe.
+A monitorenter instruction is type safe iff one can validly pop a type matching reference off the incoming operand stack yielding the outgoing type state.
+A monitorexit instruction is type safe iff the equivalent monitorenter instruction is type safe.
+A multianewarray instruction with operands CP and Dim is type safe iff CP refers to a constant pool entry denoting an array type whose dimension is greater or equal to Dim, Dim is strictly positive, and one can validly replace Dim int types on the incoming operand stack with the type denoted by CP yielding the outgoing type state.
+The dimension of an array type whose component type is also an array type is one more than the dimension of its component type.
+A newarray instruction with operand TypeCode is type safe iff TypeCode corresponds to the primitive type ElementType, and one can validly replace the type int on the incoming operand stack with the type 'array of ElementType', yielding the outgoing type state.
+The correspondence between type codes and primitive types is specified by the following predicate:
+A pop instruction is type safe iff one can validly pop a category 1 type off the incoming operand stack yielding the outgoing type state.
+A putfield instruction with operand CP is type safe iff CP refers to a constant pool entry denoting a field whose declared type is FieldType, declared in a class FieldClass, and one can validly pop types matching FieldType and FieldClass off the incoming operand stack yielding the outgoing type state.
+A putstatic instruction with operand CP is type safe iff CP refers to a constant pool entry denoting a field whose declared type is FieldType, and one can validly pop a type matching FieldType off the incoming operand stack yielding the outgoing type state.
+A return instruction is type safe if the enclosing method declares a void return type, and either:
+An saload instruction is type safe iff one can validly replace types matching int and array of short on the incoming operand stack with int yielding the outgoing type state.
+An sastore instruction is type safe iff one can validly pop types matching int, int, and array of short off the incoming operand stack yielding the outgoing type state.
+An sipush instruction is type safe iff one can validly push the type int onto the incoming operand stack yielding the outgoing type state.
+A tableswitch instruction is type safe if its keys are sorted, one can validly pop int off the incoming operand stack yielding a new type state BranchStackFrame, and all of the instruction's targets are valid branch targets assuming BranchStackFrame as their incoming type state.
+The wide instructions follow the same rules as the instructions they widen.
+A class file that does not contain a StackMapTable attribute (which necessarily has a version number of 49.0 or below) must be verified using type inference.
+During linking, the verifier checks the code array of the Code attribute for each method of the class file by performing data-flow analysis on each method.
+The verifier ensures that at any given point in the program, no matter what code path is taken to reach that point, the following is true:
+The operand stack is always the same size and contains the same types of values.
+No local variable is accessed unless it is known to contain a value of an.
+All opcodes have appropriate type arguments on the operand stack and in the.
+There is never an uninitialized class instance in a local variable in code protected.
+However, an uninitialized class instance may be on the operand stack in code protected by an exception handler.
+When an exception is thrown, the contents of the operand stack are discarded.
+For efficiency reasons, certain tests that could in principle be performed by the verifier are delayed until the first time the code for the method is actually invoked.
+In so doing, the verifier avoids loading class files unless it has to.
+For example, if a method invokes another method that returns an instance of class A, and that instance is assigned only to a field of the same type, the verifier does not bother to check if the class A actually exists.
+However, if it is assigned to a field of the type B, the definitions of both A and B must be loaded in to ensure that A is a subclass of B.
+First, the bytes that make up the code are broken up into a sequence of instructions, and the index into the code array of the start of each instruction is placed in an array.
+The verifier then goes through the code a second time and parses the instructions.
+During this pass a data structure is built to hold information about each Java Virtual Machine instruction in the method.
+The operands, if any, of each instruction are checked to make sure they are valid.
+Branches must be within the bounds of the code array for the method.
+The targets of all control-flow instructions are each the start of an instruction.
+In the case of a wide instruction, the wide opcode is considered the start of the instruction, and the opcode giving the operation modified by that wide instruction is not considered to start an instruction.
+No instruction can access or modify a local variable at an index greater than or equal to the number of local variables that its method indicates it allocates.
+All references to the constant pool must be to an entry of the appropriate type.
+The code does not end in the middle of an instruction.
+For each exception handler, the starting and ending point of code protected by.
+The exception handler code must start at a valid instruction, and it must not start at an opcode being modified by the wide instruction.
+For each instruction of the method, the verifier records the contents of the operand stack and the contents of the local variable array prior to the execution of that instruction.
+For the operand stack, it needs to know the stack height and the type of each value on it.
+For each local variable, it needs to know either the type of the contents of that local variable or that the local variable contains an unusable or unknown value (it might be uninitialized)
+The bytecode verifier does not need to distinguish between the integral types (e.g., byte, short, char) when determining the value types on the operand stack.
+For the first instruction of the method, the local variables that represent parameters initially contain values of the types indicated by the method's type descriptor; the operand stack is empty.
+For the other instructions, which have not been examined yet, no information is available regarding the operand stack or local variables.
+For each instruction, a "changed" bit indicates whether this instruction needs to be looked at.
+Initially, the "changed" bit is set only for the first instruction.
+Select a Java Virtual Machine instruction whose "changed" bit is set.
+If no instruction remains whose "changed" bit is set, the method has successfully been verified.
+Otherwise, turn off the "changed" bit of the selected instruction.
+Model the effect of the instruction on the operand stack and local variable array by doing the following:
+If the instruction uses values from the operand stack, ensure that there are a.
+If the instruction uses a local variable, ensure that the specified local variable contains a value of the appropriate type.
+If the instruction pushes values onto the operand stack, ensure that there is sufficient room on the operand stack for the new values.
+Add the indicated types to the top of the modeled operand stack.
+If the instruction modifies a local variable, record that the local variable now contains the new type.
+The next instruction, if the current instruction is not an unconditional control.
+Verification fails if it is possible to "fall off" the last instruction of the method.
+The target(s) of a conditional or unconditional branch or switch.
+Merge the state of the operand stack and local variable array at the end of the execution of the current instruction into each of the successor instructions.
+In the special case of control transfer to an exception handler, the operand stack is set to contain a single object of the exception type indicated by the exception handler information.
+There must be sufficient room on the operand stack for this single value, as if an instruction had pushed it.
+Set the "changed" bit if there is any modification to the values.
+To merge two operand stacks, the number of values on each stack must be identical.
+The types of values on the stacks must also be identical, except that differently typed reference values may appear at corresponding places on the two stacks.
+In this case, the merged operand stack contains a reference to an instance of the first common superclass of the two types.
+Such a reference type always exists because the type Object is a superclass of all class and interface types.
+If the operand stacks cannot be merged, verification of the method fails.
+To merge two local variable array states, corresponding pairs of local variables are compared.
+If the two types are not identical, then unless both contain reference values, the verifier records that the local variable contains an unusable value.
+If both of the pair of local variables contain reference values, the merged state contains a reference to an instance of the first common superclass of the two types.
+If the data-flow analyzer runs on a method without reporting a verification failure, then the method has been successfully verified by the class file verifier.
+Values of the long and double types are treated specially by the verification process.
+Whenever a value of type long or double is moved into a local variable at index n, index n+1 is specially marked to indicate that it has been reserved by the value at index n and must not be used as a local variable index.
+Whenever a value is moved to a local variable at index n, the index n-1 is examined to see if it is the index of a value of type long or double.
+If so, the local variable at index n-1 is changed to indicate that it now contains an unusable value.
+Dealing with values of types long or double on the operand stack is simpler; the verifier treats them as single values on the stack.
+For example, the verification code for the dadd opcode (add two double values) checks that the top two items on the stack are both of type double.
+When calculating operand stack length, values of type long and double have length two.
+Untyped instructions that manipulate the operand stack must treat values of type long and double as atomic (indivisible)
+For example, the verifier reports a failure if the top value on the stack is a double and it encounters an instruction such as pop or dup.
+The verifier rejects code that uses the new object before it has been initialized or that initializes the object more than once.
+In addition, it ensures that every normal return of the method has invoked an instance initialization method either in the class of this method or in the direct superclass.
+Similarly, a special type is created and pushed on the verifier's model of the operand stack as the result of the Java Virtual Machine instruction new.
+The special type indicates the instruction by which the class instance was created and the type of the uninitialized class instance created.
+When an instance initialization method declared in the class of the uninitialized class instance is invoked on that class instance, all occurrences of the special type are replaced by the intended type of the class instance.
+This change in type may propagate to subsequent instructions as the dataflow analysis proceeds.
+For example, the Java Virtual Machine instruction sequence that implements:
+When an instance initialization method is invoked on a class instance, only those occurrences of the special type on the operand stack or in the local variable array that are the same object as the class instance are replaced.
+A valid instruction sequence must not have an uninitialized object on the operand stack or in a local variable at the target of a backwards branch if the special type of the uninitialized object is merged with a special type other than itself, or in a local variable in code protected by an exception handler or a finally clause.
+Otherwise, a devious piece of code might fool the verifier into thinking it had initialized a class instance when it had, in fact, initialized a class instance created in a previous pass through a loop.
+To implement the try-finally construct, a compiler for the Java programming language that generates class files with version number 50.0 or below may use the exception-handling facilities together with two special instructions: jsr ("jump to subroutine") and ret ("return from subroutine")
+The finally clause is compiled as a subroutine within the Java Virtual Machine code for its method, much like the.
+When a jsr instruction that invokes the subroutine is executed, it pushes its return address, the address of the instruction after the jsr that is being executed, onto the operand stack as a value of type returnAddress.
+The code for the subroutine stores the return address in a local variable.
+At the end of the subroutine, a ret instruction fetches the return address from the local variable and transfers control to the instruction at the return address.
+Control can be transferred to the finally clause (the finally subroutine can be invoked) in several different ways.
+If the try clause completes normally, the finally subroutine is invoked via a jsr instruction before evaluating the next expression.
+A break or continue inside the try clause that transfers control outside the try clause executes a jsr to the code for the finally clause first.
+Saves the return value (if any) in a local variable.
+Executes a jsr to the code for the finally clause.
+The compiler sets up a special exception handler, which catches any exception thrown by the try clause.
+The code for the finally clause presents a special problem to the verifier.
+Usually, if a particular instruction can be reached via multiple paths and a particular local variable contains incompatible values through those multiple paths, then the local variable becomes unusable.
+However, a finally clause might be called from several different places, yielding several different circumstances:
+The invocation from the exception handler may have a certain local variable that.
+The invocation to implement return may have some local variable that contains the return value.
+The invocation from the bottom of the try clause may have an indeterminate value in that same local variable.
+The code for the finally clause itself might pass verification, but after completing the updating all the successors of the ret instruction, the verifier would note that the local variable that the exception handler expects to hold an exception, or that the return code expects to hold a return value, now contains an indeterminate value.
+Each instruction keeps track of the list of jsr targets needed to reach that instruction.
+For instructions inside code for the finally clause, it is of length one.
+For each instruction and each jsr needed to reach that instruction, a bit vector is maintained of all local variables accessed or modified since the execution of the jsr instruction.
+When executing the ret instruction, which implements a return from a subroutine, there must be only one possible subroutine from which the instruction can be returning.
+Two different subroutines cannot "merge" their execution to a single ret instruction.
+For other local variables, use the type of the local variable before the jsr instruction.
+The following limitations of the Java Virtual Machine are implicit in the class file format:
+Note that values of type long and double are each considered to reserve two local variables and contribute two units toward the max_locals value, so use of local variables of those types further reduces this limit.
+Whenever this chapter refers to the name of a class or interface, it should be understood to be in the form returned by the Class.getName method.
+In addition, certain run-time values which are not symbolic references are derived from items found in the constant_pool table:
+A string literal is a reference to an instance of class String, and is derived.
+Finally, the intern method of the new String instance is invoked.
+Given the same name, a good class loader should always return the same Class object.
+If a user-defined classloader prefetches binary representations of classes and interfaces, or loads a group of related classes together, then it must reflect loading errors only at points in the program where they could have arisen without prefetching or group loading.
+We will also represent a class or interface using the notation NLi, where N denotes the name of the class or interface and Li denotes an initiating loader of the class or interface.
+The following steps are used to load and thereby create the nonarray class or interface C denoted by N using the bootstrap class loader.
+First, the Java Virtual Machine determines whether the bootstrap class loader has already been recorded as an initiating loader of a class or interface denoted by N.
+If so, this class or interface is C, and no class creation is necessary.
+Otherwise, the Java Virtual Machine passes the argument N to an invocation of a method on the bootstrap class loader to search for a purported representation of C.
+Typically, a class or interface will be represented using a file in a hierarchical file system, and the name of the class or interface will be encoded in the pathname of the file.
+Note that there is no guarantee that a purported representation found is valid or is a representation of C.
+The class loader L can delegate the loading of C to some other class loader L'
+This is accomplished by passing the argument N directly or indirectly to an invocation of a method on L' (typically the loadClass method)
+Since JDK release 1.1, Oracle’s Java Virtual Machine implementation has invoked the loadClass method of a class loader in order to cause it to load a class or interface.
+The argument to loadClass is the name of the class or interface to be loaded.
+There is also a two-argument version of the loadClass method, where the second argument is a boolean that indicates whether the class or interface is to be linked or not.
+Only the twoargument version was supplied in JDK release 1.0.2, and Oracle’s Java Virtual Machine implementation relied on it to link the loaded class or interface.
+From JDK release 1.1 onward, Oracle’s Java Virtual Machine implementation links the class or interface directly, without relying on the class loader.
+Ensuring type safe linkage in the presence of class loaders requires special care.
+It is possible that when two different class loaders initiate loading of a class or interface denoted by N, the name N may denote a different class or interface in each loader.
+There exists a loader L' such that L' has been recorded by the Java Virtual Machine.
+The equivalence relation defined by the (transitive closure of the) set of imposed.
+A full discussion of class loaders and type safety is beyond the scope of this specification.
+The following steps are used to derive a Class object for the nonarray class or interface C denoted by N using loader L from a purported representation in class file format.
+If so, this creation attempt is invalid and loading throws a LinkageError.
+Otherwise, if the purported representation is not of a supported.
+Linking a class or interface involves verifying and preparing that class or interface, its direct superclass, its direct superinterfaces, and its element type (if it is an array type), if necessary.
+Resolution of symbolic references in the class or interface is an optional part of linking.
+This specification allows an implementation flexibility as to when linking activities (and, because of recursion, loading) take place, provided that all of the following properties are maintained:
+A class or interface is completely loaded before it is linked.
+A class or interface is completely verified and prepared before it is initialized.
+Errors detected during linkage are thrown at a point in the program where some.
+For example, a Java Virtual Machine implementation may choose to resolve each symbolic reference in a class or interface individually when it is used ("lazy" or "late" resolution), or to resolve them all at once when the class is being verified ("eager" or "static" resolution)
+This means that the resolution process may continue, in some implementations, after a class or interface has been initialized.
+Whichever strategy is followed, any error detected during resolution must be.
+Because linking involves the allocation of new data structures, it may fail with an OutOfMemoryError.
+Given that the return type of m is Tr, and that the formal parameter types of m are Tf1, ..., Tfn, then:
+Given that the return type of m is Tr, and that the formal parameter types of m are Tf1, ..., Tfn, then:
+Preparation may occur at any time following creation but must be completed prior to initialization.
+Execution of any of these instructions requires resolution of its symbolic reference.
+Resolution is the process of dynamically determining concrete values from symbolic references in the run-time constant pool.
+Resolution of the symbolic reference of one occurrence of an invokedynamic instruction does not imply that the same symbolic reference is considered resolved for any other invokedynamic instruction.
+For all other instructions above, resolution of the symbolic reference of one occurrence of an instruction does imply that the same symbolic reference is considered resolved for any other non-invokedynamic instruction.
+The above text implies that the concrete value determined by resolution for a specific invokedynamic instruction is a call site object bound to that specific invokedynamic instruction.
+Resolution can be attempted on a symbolic reference that has already been resolved.
+An attempt to resolve a symbolic reference that has already successfully been resolved always succeeds trivially and always results in the same entity produced by the initial resolution of that reference.
+If an attempt by the Java Virtual Machine to resolve a symbolic reference fails because an error is thrown that is an instance of LinkageError (or a subclass), then subsequent attempts to resolve the reference always fail with the same error that was thrown as a result of the initial resolution attempt.
+To resolve an unresolved symbolic reference from D to a class or interface C denoted by N, the following steps are performed:
+Any exception that can be thrown as a result of failure of class or interface creation can thus be thrown as a result of failure of class and interface resolution.
+This condition can occur, for example, if C is a class that was originally declared to be public but was changed to be non-public after D was compiled.
+Nevertheless, resolution fails, and D is prohibited from accessing C.
+The declared field is the result of the field lookup.
+Otherwise, field lookup is applied recursively to the direct superinterfaces of the specified class or interface C.
+Otherwise, if C has a superclass S, field lookup is applied recursively to S.
+Method resolution attempts to look up the referenced method in C and its superclasses:
+Otherwise, if C declares a method with the name and descriptor specified by the method reference, method lookup succeeds.
+Otherwise, if C has a superclass, step 2 of method lookup is recursively invoked on the direct superclass of C.
+Otherwise, method lookup attempts to locate the referenced method in any of the superinterfaces of the specified class C.
+If any superinterface of C declares a method with the name and descriptor.
+Given that the return type of m is Tr, and that the formal parameter types of m are Tf1, ..., Tfn, then:
+Otherwise, if the referenced method does not have the same name and descriptor as a method in C or in one of the superinterfaces of C, or in class Object, interface method resolution throws a NoSuchMethodError.
+Given that the return type of m is Tr, and that the formal parameter types of m are Tf1, ..., Tfn, then:
+Let C be a symbolic reference to the type referenced by R.
+Let f or m be the name of the field or method referenced by R.
+Let T and (in the case of a method) A* be the return type and argument type sequence of the field or method referenced by R.
+That is, creation of a variable arity method handle fails.
+Calling this method handle on a valid set of arguments has exactly the same effect and returns the same result (if any) as the corresponding bytecode behavior.
+An implementation of the Java Virtual Machine is not required to intern method types or method handles.
+For example, a method handle may, when invoked, first apply transformations to its argument values, then supply the transformed values to the invocation of another method handle, then apply a transformation to the value returned from that invocation, then return the transformed value as its own result.
+To resolve an unresolved symbolic reference to a call site specifier involves three steps:
+Any static arguments that are string literals are used to obtain references to String objects.
+The result of call site specifier resolution is a tuple consisting of:
+A class or interface C is accessible to a class or interface D if and only if either of the following conditions is true:
+Furthermore, if R is not static, then the symbolic reference to R must contain a symbolic reference to a class T, such that T is either a subclass of D, a superclass of D, or D itself.
+For each class or interface C, there is a unique initialization lock LC.
+The mapping from C to LC is left to the discretion of the Java Virtual Machine implementation.
+For example, LC could be the Class object for C, or the monitor associated with that Class object.
+If the Class object for C indicates that initialization is in progress for C by the current thread, then this must be a recursive request for initialization.
+If the Class object for C indicates that C has already been initialized, then no further action is required.
+If the Class object for C is in an erroneous state, then initialization is not possible.
+Otherwise, record the fact that initialization of the Class object for C is in progress by the current thread, and release LC.
+Next, if C is a class rather than an interface, and its superclass SC has not yet been initialized, then recursively perform this entire procedure for SC.
+If the initialization of SC completes abruptly because of a thrown exception, then acquire LC, label the Class object for C as erroneous, notify all waiting threads, release LC, and complete abruptly, throwing the same exception that resulted from initializing SC.
+Next, determine whether assertions are enabled for C by querying its defining class loader.
+Next, execute the class or interface initialization method of C.
+Otherwise, the class or interface initialization method must have completed abruptly by throwing some exception E.
+Acquire LC, label the Class object for C as erroneous, notify all waiting threads, release LC, and complete this procedure abruptly with reason E or its replacement as determined in the previous step.
+Binding is the process by which a function written in a language other than the Java programming language and implementing a native method is integrated into the Java Virtual Machine so that it can be executed.
+Although this process is traditionally referred to as linking, the term binding is used in the specification to avoid confusion with linking of classes or interfaces by the Java Virtual Machine.
+The Java Virtual Machine exits when some thread invokes the exit method of class Runtime or class System, or the halt method of class Runtime, and the exit or halt operation is permitted by the security manager.
+A Java Virtual Machine instruction consists of an opcode specifying the operation to be performed, followed by zero or more operands embodying values to be operated upon.
+This chapter gives details about the format of each Java Virtual Machine instruction and the operation it performs.
+A Java Virtual Machine implementation throws an object that is an instance of a subclass of the class VirtualMethodError when an internal error or resource limitation prevents it from implementing the semantics described in this chapter.
+This specification cannot predict where internal errors or resource limitations may be encountered and does not mandate precisely when they can be reported.
+Thus, any of the VirtualMethodError subclasses defined below may be thrown at any time during the operation of the Java Virtual Machine:
+OutOfMemoryError: The Java Virtual Machine implementation has run out of either virtual or physical memory, and the automatic storage manager was unable to reclaim enough memory to satisfy an object creation request.
+UnknownError: An exception or error has occurred, but the Java Virtual Machine implementation is unable to report the actual exception or error.
+Java Virtual Machine instructions are represented in this chapter by entries of the form shown below, in alphabetical order and each beginning on a new page.
+Description A longer description detailing constraints on operand stack contents or constant pool entries, the operation performed, the type of the results, etc.
+If any linking exceptions may be thrown by the execution of this instruction, they are set off one to a line, in the order in which they must be thrown.
+If any run-time exceptions can be thrown by the execution of an instruction, they are set off one to a line, in the order in which they must be thrown.
+Other than the linking and run-time exceptions, if any, listed for an instruction, that instruction must not throw any run-time exceptions except for instances of VirtualMethodError or its subclasses.
+Notes Comments not strictly part of the specification of an instruction are set aside as notes at the end of the description.
+In The Java Virtual Machine Specification, First Edition, values on the operand stack of types long and double were each represented in the stack diagram by two entries.
+Description The arrayref must be of type reference and must refer to an array whose components are of type reference.
+Both arrayref and index are popped from the operand stack.
+The reference value in the component of the array at index is retrieved and pushed onto the operand stack.
+Description The arrayref must be of type reference and must refer to an array whose components are of type reference.
+The index must be of type int and value must be of type reference.
+The arrayref, index, and value are popped from the operand stack.
+The reference value is stored as the component of the array at index.
+At run time, the type of value must be compatible with the type of the components of the array referenced by arrayref.
+Specifically, assignment of a value of reference type S (source) to an array component of reference type T (target) is allowed only if:
+If T is a class type, then S must be the same class as T, or S must be a subclass of T;
+If T is an interface type, then S must implement interface T.
+Description Push the null object reference onto the operand stack.
+Notes The Java Virtual Machine does not mandate a concrete value for null.
+Notes The anewarray instruction is used to create a single dimension of an array of object references or part of a multidimensional array.
+Description The arrayref must be of type reference and must refer to an array.
+That length is pushed onto the operand stack as an int.
+Notes The operand stack diagram for the athrow instruction may be misleading: If a handler for this exception is matched in the current method, the athrow instruction discards all the values on the operand stack, then pushes the thrown object onto the operand stack.
+However, if no handler is matched in the current method and the exception is thrown farther up the method invocation chain, then the operand stack of the method (if any) that handles the exception is cleared and objectref is pushed onto that empty operand stack.
+All intervening frames from the method that threw the exception up to, but not including, the method that handles the exception are discarded.
+Description The arrayref must be of type reference and must refer to an array whose components are of type byte or of type boolean.
+Both arrayref and index are popped from the operand stack.
+The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
+Description The arrayref must be of type reference and must refer to an array whose components are of type byte or of type boolean.
+The index and the value must both be of type int.
+The arrayref, index, and value are popped from the operand stack.
+The int value is truncated to a byte and stored as the component of the array indexed by index.
+Description The immediate byte is sign-extended to an int value.
+Description The arrayref must be of type reference and must refer to an array whose components are of type char.
+Both arrayref and index are popped from the operand stack.
+The component of the array at index is retrieved and zero-extended to an int value.
+Description The arrayref must be of type reference and must refer to an array whose components are of type char.
+The index and the value must both be of type int.
+The arrayref, index, and value are popped from the operand stack.
+The int value is truncated to a char and stored as the component of the array indexed by index.
+Otherwise, if objectref cannot be cast to the resolved class, array, or interface type, the checkcast instruction throws a ClassCastException.
+If this integer value V can be represented as an int, then the result is the int value V.
+Otherwise, either the value' must be too small (a negative value of large magnitude or negative infinity), and the result is the smallest representable value of type int, or the value' must be too large (a positive value of large magnitude or positive infinity), and the result is the largest representable value of type int.
+If this integer value V can be represented as a long, then the result is the long value V.
+Otherwise, either the value' must be too small (a negative value of large magnitude or negative infinity), and the result is the smallest representable value of type long, or the value' must be too large (a positive value of large magnitude or positive infinity), and the result is the largest representable value of type long.
+The sum of two infinities of opposite sign is NaN.
+The sum of two infinities of the same sign is the infinity of that sign.
+The sum of an infinity and any finite value is equal to the infinity.
+The sum of two zeroes of opposite sign is positive zero.
+The sum of two zeroes of the same sign is the zero of that sign.
+The sum of a zero and a nonzero finite value is equal to the nonzero value.
+The sum of two nonzero finite values of the same magnitude and opposite sign is positive zero.
+In the remaining cases, where neither operand is an infinity, a zero, or NaN and the values have the same sign or have different magnitudes, the sum is computed and rounded to the nearest representable value using IEEE 754 round to nearest mode.
+If the magnitude is too small to represent as a double, we say the operation underflows; the result is then a zero of appropriate sign.
+Despite the fact that overflow, underflow, or loss of precision may occur, execution of a dadd instruction never throws a run-time exception.
+Description The arrayref must be of type reference and must refer to an array whose components are of type double.
+Both arrayref and index are popped from the operand stack.
+The double value in the component of the array at index is retrieved and pushed onto the operand stack.
+All values other than NaN are ordered, with negative infinity less than all finite values and positive infinity greater than all finite values.
+Notes The dcmpg and dcmpl instructions differ only in their treatment of a comparison involving NaN.
+NaN is unordered, so any double comparison fails if either or both of its operands are NaN.
+With both dcmpg and dcmpl available, any double comparison may.
+Division of an infinity by an infinity results in NaN.
+Division of an infinity by a finite value results in a signed.
+Division of a zero by a zero results in NaN; division of zero.
+Division of a nonzero finite value by a zero results in a signed infinity, with the sign-producing rule just given.
+In the remaining cases, where neither operand is an infinity, a zero, or NaN, the quotient is computed and rounded to the nearest double using IEEE 754 round to nearest mode.
+If the magnitude is too small to represent as a double, we say the operation underflows; the result is then a zero of appropriate sign.
+Despite the fact that overflow, underflow, division by zero, or loss of precision may occur, execution of a ddiv instruction never throws a run-time exception.
+Multiplication of an infinity by a zero results in NaN.
+Multiplication of an infinity by a finite value results in a signed.
+In the remaining cases, where neither an infinity nor NaN is.
+If the magnitude is too large to represent as a double, we say the operation overflows; the result is then an infinity of appropriate sign.
+If the magnitude is too small to represent as a double, we say the operation underflows; the result is then a zero of appropriate sign.
+If the operand is NaN, the result is NaN (recall that NaN has no sign)
+If the operand is an infinity, the result is the infinity of opposite sign.
+If the operand is a zero, the result is the zero of opposite sign.
+If the dividend is an infinity or the divisor is a zero or both, the.
+If the dividend is finite and the divisor is an infinity, the result equals the dividend.
+If the dividend is a zero and the divisor is finite, the result equals the dividend.
+Despite the fact that division by zero may occur, evaluation of a drem instruction never throws a run-time exception.
+Operation Duplicate the top operand stack value and insert two values down.
+Operation Duplicate the top operand stack value and insert two or three values down.
+Description Duplicate the top value on the operand stack and insert the duplicated value two or three values down in the operand stack.
+Operation Duplicate the top one or two operand stack values.
+Description Duplicate the top one or two values on the operand stack and push the duplicated value or values back onto the operand stack in the original order.
+Operation Duplicate the top one or two operand stack values and insert two or three values down.
+Description Duplicate the top one or two values on the operand stack and insert the duplicated values, in the original order, one value beneath the original value or values in the operand stack.
+Operation Duplicate the top one or two operand stack values and insert two, three, or four values down.
+Description Duplicate the top one or two values on the operand stack and insert the duplicated values, in the original order, into the operand stack.
+If this integer value V can be represented as an int, then the result is the int value V.
+Otherwise, either the value' must be too small (a negative value of large magnitude or negative infinity), and the result is the smallest representable value of type int, or the value' must be too large (a positive value of large magnitude or positive infinity), and the result is the largest representable value of type int.
+If this integer value V can be represented as a long, then the result is the long value V.
+Otherwise, either the value' must be too small (a negative value of large magnitude or negative infinity), and the result is the smallest representable value of type long, or the value' must be too large (a positive value of large magnitude or positive infinity), and the result is the largest representable value of type long.
+The sum of two infinities of opposite sign is NaN.
+The sum of two infinities of the same sign is the infinity of that sign.
+The sum of an infinity and any finite value is equal to the infinity.
+The sum of two zeroes of opposite sign is positive zero.
+The sum of two zeroes of the same sign is the zero of that sign.
+The sum of a zero and a nonzero finite value is equal to the nonzero value.
+The sum of two nonzero finite values of the same magnitude and opposite sign is positive zero.
+In the remaining cases, where neither operand is an infinity, a zero, or NaN and the values have the same sign or have different magnitudes, the sum is computed and rounded to the nearest representable value using IEEE 754 round to nearest mode.
+If the magnitude is too small to represent as a float, we say the operation underflows; the result is then a zero of appropriate sign.
+Despite the fact that overflow, underflow, or loss of precision may occur, execution of an fadd instruction never throws a run-time exception.
+Description The arrayref must be of type reference and must refer to an array whose components are of type float.
+Both arrayref and index are popped from the operand stack.
+The float value in the component of the array at index is retrieved and pushed onto the operand stack.
+All values other than NaN are ordered, with negative infinity less than all finite values and positive infinity greater than all finite values.
+Notes The fcmpg and fcmpl instructions differ only in their treatment of a comparison involving NaN.
+NaN is unordered, so any float comparison fails if either or both of its operands are NaN.
+With both fcmpg and fcmpl available, any float comparison may.
+Division of an infinity by an infinity results in NaN.
+Division of an infinity by a finite value results in a signed.
+Division of a zero by a zero results in NaN; division of zero.
+Division of a nonzero finite value by a zero results in a signed infinity, with the sign-producing rule just given.
+In the remaining cases, where neither operand is an infinity, a zero, or NaN, the quotient is computed and rounded to the nearest float using IEEE 754 round to nearest mode.
+If the magnitude is too small to represent as a float, we say the operation underflows; the result is then a zero of appropriate sign.
+Despite the fact that overflow, underflow, division by zero, or loss of precision may occur, execution of an fdiv instruction never throws a run-time exception.
+Multiplication of an infinity by a zero results in NaN.
+Multiplication of an infinity by a finite value results in a signed.
+In the remaining cases, where neither an infinity nor NaN is.
+If the magnitude is too large to represent as a float, we say the operation overflows; the result is then an infinity of appropriate sign.
+If the magnitude is too small to represent as a float, we say the operation underflows; the result is then a zero of appropriate sign.
+If the operand is NaN, the result is NaN (recall that NaN has no sign)
+If the operand is an infinity, the result is the infinity of opposite sign.
+If the operand is a zero, the result is the zero of opposite sign.
+If the dividend is an infinity or the divisor is a zero or both, the.
+If the dividend is finite and the divisor is an infinity, the result equals the dividend.
+If the dividend is a zero and the divisor is finite, the result equals the dividend.
+Despite the fact that division by zero may occur, evaluation of an frem instruction never throws a run-time exception.
+Execution proceeds at that offset from the address of the opcode of this goto instruction.
+The target address must be that of an opcode of an instruction within the method that contains this goto instruction.
+Execution proceeds at that offset from the address of the opcode of this goto_w instruction.
+The target address must be that of an opcode of an instruction within the method that contains this goto_w instruction.
+Description The value on the top of the operand stack must be of type int.
+It is popped from the operand stack, truncated to a byte, then signextended to an int result.
+Description The value on the top of the operand stack must be of type int.
+It is popped from the operand stack, truncated to char, then zeroextended to an int result.
+Description The value on the top of the operand stack must be of type int.
+It is popped from the operand stack and converted to a double result.
+Description The value on the top of the operand stack must be of type int.
+It is popped from the operand stack and converted to the float result using IEEE 754 round to nearest mode.
+Description The value on the top of the operand stack must be of type int.
+It is popped from the operand stack and sign-extended to a long result.
+Description The value on the top of the operand stack must be of type int.
+It is popped from the operand stack, truncated to a short, then signextended to an int result.
+The result is the 32 low-order bits of the true mathematical result in a sufficiently wide two's-complement format, represented as a value of type int.
+If overflow occurs, then the sign of the result may not be the same as the sign of the mathematical sum of the two values.
+Despite the fact that overflow may occur, execution of an iadd instruction never throws a run-time exception.
+Description The arrayref must be of type reference and must refer to an array whose components are of type int.
+Both arrayref and index are popped from the operand stack.
+The int value in the component of the array at index is retrieved and pushed onto the operand stack.
+Description The arrayref must be of type reference and must refer to an array whose components are of type int.
+The arrayref, index, and value are popped from the operand stack.
+The int value is stored as the component of the array indexed by index.
+They are both popped from the operand stack and compared.
+They are both popped from the operand stack and compared.
+Otherwise, execution proceeds at the address of the instruction following this if_icmp<cond> instruction.
+It is popped from the operand stack and compared against zero.
+Otherwise, execution proceeds at the address of the instruction following this if<cond> instruction.
+Execution then proceeds at that offset from the address of the opcode of this ifnonnull instruction.
+The target address must be that of an opcode of an instruction within the method that contains this ifnonnull instruction.
+Otherwise, execution proceeds at the address of the instruction following this ifnonnull instruction.
+Execution then proceeds at that offset from the address of the opcode of this ifnull instruction.
+The target address must be that of an opcode of an instruction within the method that contains this ifnull instruction.
+Otherwise, execution proceeds at the address of the instruction following this ifnull instruction.
+The result is the 32 low-order bits of the true mathematical result in a sufficiently wide two's-complement format, represented as a value of type int.
+If overflow occurs, then the sign of the result may not be the same as the sign of the mathematical sum of the two values.
+Despite the fact that overflow may occur, execution of an imul instruction never throws a run-time exception.
+The int result is the arithmetic negation of value, -value.
+For int values, negation is the same as subtraction from zero.
+Because the Java Virtual Machine uses two's-complement representation for integers and the range of two's-complement values is not symmetric, the negation of the maximum negative int results in that same maximum negative number.
+Despite the fact that overflow has occurred, no exception is thrown.
+The method's descriptor has parameter types derived from the items pushed on to the operand stack, as follows.
+If the call site specifier has any static arguments, then a parameter type for each argument is appended to the parameter types of the method descriptor in the order that the arguments were pushed on to the operand stack.
+The method's descriptor is the method descriptor in the call site.
+The operand stack will be interpreted as containing a reference to the target of the call site object, followed by nargs argument values, where the number, type, and order of the values must be consistent with the method descriptor in the call site specifier.
+Therefore, the operand stack item which represents a reference to the target of the call site object is never null.
+Similarly, it implies that the method descriptor in the call site specifier is semantically equal to the type descriptor of the method handle to be invoked as if by execution of an invokevirtual instruction.
+Otherwise, if C has a superclass, this same lookup procedure is performed recursively using the direct superclass of C; the method to be invoked is the result of the recursive invocation of this lookup procedure.
+Otherwise, if the selected method is not public, invokeinterface throws an IllegalAccessError.
+Notes The count operand of the invokeinterface instruction records a measure of the number of argument values, where an argument value of type long or type double contributes two units to the count value and an argument of any other type contributes one unit.
+This information can also be derived from the descriptor of the selected method.
+The fourth operand byte exists to reserve space for an additional operand used in certain of Oracle's Java Virtual Machine implementations, which replace the invokeinterface instruction by a specialized pseudo-instruction at run time.
+The nargs argument values and objectref are not one-to-one with the first nargs+1 local variables.
+Argument values of types long and double must be stored in two consecutive local variables, thus more than nargs local variables may be required to pass nargs argument values to the invoked method.
+Operation Invoke instance method; special handling for superclass, private, and instance initialization method invocations.
+If the above conditions are true, the actual method to be invoked is selected by the following lookup procedure.
+Let C be the direct superclass of the current class:
+If C contains a declaration for an instance method with the same name and descriptor as the resolved method, then this method will be invoked.
+Otherwise, if C has a superclass, this same lookup procedure is performed recursively using the direct superclass of C.
+The method to be invoked is the result of the recursive invocation of this lookup procedure.
+Otherwise, if the resolved method is an instance initialization method, and the class in which it is declared is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
+The invokespecial instruction was named invokenonvirtual prior to JDK release 1.0.2
+The nargs argument values and objectref are not one-to-one with the first nargs+1 local variables.
+Argument values of types long and double must be stored in two consecutive local variables, thus more than nargs local variables may be required to pass nargs argument values to the invoked method.
+Notes The nargs argument values are not one-to-one with the first nargs local variables.
+Argument values of types long and double must be stored in two consecutive local variables, thus more than nargs local variables may be required to pass nargs argument values to the invoked method.
+Otherwise, if C has a superclass, this same lookup procedure is performed recursively using the direct superclass of C; the.
+If the native method returns a value, the return value of the platform-dependent code is converted in an implementationTHE JAVA VIRTUAL MACHINE INSTRUCTION SET Instructions 6.5
+The frame in which the bytecode behavior itself executes is not visible.
+If no method matching the resolved name and descriptor is.
+Notes The nargs argument values and objectref are not one-to-one with the first nargs+1 local variables.
+Argument values of types long and double must be stored in two consecutive local variables, thus more than nargs local variables may be required to pass nargs argument values to the invoked method.
+The result of the irem instruction is such that (a/b)*b + (a%b) is equal to a.
+It follows from this rule that the result of the remainder operation can be negative only if the dividend is negative and can be positive only if the dividend is positive.
+Moreover, the magnitude of the result is always less than the magnitude of the divisor.
+Notes This is equivalent (even if overflow occurs) to multiplication by 2 to the power s.
+For int subtraction, a-b produces the same result as a+(-b)
+For int values, subtraction from zero is the same as negation.
+The result is the 32 low-order bits of the true mathematical result in a sufficiently wide two's-complement format, represented as a value of type int.
+If overflow occurs, then the sign of the result may not be the same as the sign of the mathematical difference of the two values.
+Despite the fact that overflow may occur, execution of an isub instruction never throws a run-time exception.
+Description The address of the opcode of the instruction immediately following this jsr instruction is pushed onto the operand stack as a value of type returnAddress.
+Execution proceeds at that offset from the address of this jsr instruction.
+The target address must be that of an opcode of an instruction within the method that contains this jsr instruction.
+Description The address of the opcode of the instruction immediately following this jsr_w instruction is pushed onto the operand stack as a value of type returnAddress.
+Execution proceeds at that offset from the address of this jsr_w instruction.
+The target address must be that of an opcode of an instruction within the method that contains this jsr_w instruction.
+Description The value on the top of the operand stack must be of type long.
+It is popped from the operand stack and converted to a double result using IEEE 754 round to nearest mode.
+Description The value on the top of the operand stack must be of type long.
+It is popped from the operand stack and converted to a float result using IEEE 754 round to nearest mode.
+Description The value on the top of the operand stack must be of type long.
+The result is the 64 low-order bits of the true mathematical result in a sufficiently wide two's-complement format, represented as a value of type long.
+If overflow occurs, the sign of the result may not be the same as the sign of the mathematical sum of the two values.
+Despite the fact that overflow may occur, execution of an ladd instruction never throws a run-time exception.
+Description The arrayref must be of type reference and must refer to an array whose components are of type long.
+Both arrayref and index are popped from the operand stack.
+The long value in the component of the array at index is retrieved and pushed onto the operand stack.
+Description The arrayref must be of type reference and must refer to an array whose components are of type long.
+The index must be of type int, and value must be of type long.
+The arrayref, index, and value are popped from the operand stack.
+The long value is stored as the component of the array indexed by index.
+They are both popped from the operand stack, and a signed integer comparison is performed.
+Operation Push long or double from run-time constant pool (wide index)
+The result is the 64 low-order bits of the true mathematical result in a sufficiently wide two's-complement format, represented as a value of type long.
+If overflow occurs, the sign of the result may not be the same as the sign of the mathematical sum of the two values.
+Despite the fact that overflow may occur, execution of an lmul instruction never throws a run-time exception.
+The long result is the arithmetic negation of value, -value.
+For long values, negation is the same as subtraction from zero.
+Because the Java Virtual Machine uses two's-complement representation for integers and the range of two's-complement values is not symmetric, the negation of the maximum negative long results in that same maximum negative number.
+Despite the fact that overflow has occurred, no exception is thrown.
+Immediately after the lookupswitch opcode, between zero and three bytes must act as padding, such that defaultbyte1 begins at an address that is a multiple of four bytes from the start of the current method (the opcode of its first instruction)
+Each of the npairs pairs consists of an int match and a signed 32-bit offset.
+The table match-offset pairs of the lookupswitch instruction must be sorted in increasing numerical order by match.
+The key must be of type int and is popped from the operand stack.
+If it is equal to one of them, then a target address is calculated by adding the corresponding offset to the address of the opcode of this lookupswitch instruction.
+If the key does not match any of the match values, the target address is calculated by adding default to the address of the opcode of this lookupswitch instruction.
+The target address that can be calculated from the offset of each match-offset pair, as well as the one calculated from default, must be the address of an opcode of an instruction within the method that contains this lookupswitch instruction.
+The match-offset pairs are sorted to support lookup routines that are quicker than linear search.
+The result of the lrem instruction is such that (a/b)*b + (a%b) is equal to a.
+It follows from this rule that the result of the remainder operation can be negative only if the dividend is negative and can be positive only if the dividend is positive; moreover, the magnitude of the result is always less than the magnitude of the divisor.
+Notes This is equivalent (even if overflow occurs) to multiplication by 2 to the power s.
+For long subtraction, a-b produces the same result as a+(-b)
+For long values, subtraction from zero is the same as negation.
+The result is the 64 low-order bits of the true mathematical result in a sufficiently wide two's-complement format, represented as a value of type long.
+If overflow occurs, then the sign of the result may not be the same as the sign of the mathematical sum of the two values.
+Despite the fact that overflow may occur, execution of an lsub instruction never throws a run-time exception.
+A monitor is locked if and only if it has an owner.
+The thread that executes monitorenter attempts to gain ownership of the monitor associated with objectref, as follows:
+If the entry count of the monitor associated with objectref is.
+If the thread already owns the monitor associated with objectref, it reenters the monitor, incrementing its entry count.
+If another thread already owns the monitor associated with objectref, the thread blocks until the monitor's entry count is zero, then tries again to gain ownership.
+The association of a monitor with an object may be managed in various ways that are beyond the scope of this specification.
+For instance, the monitor may be allocated and deallocated at the same time as the object.
+Alternatively, it may be dynamically allocated at the time when a thread attempts to gain exclusive access to the object and freed at some later time when no thread remains in the monitor for the object.
+The synchronization constructs of the Java programming language require support for operations on monitors besides entry and exit.
+These operations are supported in the standard package java.lang supplied with the Java Virtual Machine.
+No explicit support for these operations appears in the instruction set of the Java Virtual Machine.
+The thread that executes monitorexit must be the owner of the monitor associated with the instance referenced by objectref.
+The thread decrements the entry count of the monitor associated with objectref.
+If as a result the value of the entry count is zero, the thread exits the monitor and is no longer its owner.
+Other threads that are blocking to enter the monitor are allowed to attempt to do so.
+The Java Virtual Machine supports exceptions thrown within synchronized methods and synchronized statements differently:
+Monitor exit on abrupt synchronized method completion is handled implicitly by the Java Virtual Machine's athrow instruction.
+The count represents the number of elements in the array to be created.
+The atype is a code that indicates the type of array to create.
+Operation Pop the top one or two operand stack values.
+Description Pop the top one or two values from the operand stack.
+Otherwise, if the field is final, it must be declared in the current class, and the instruction must occur in an instance initialization method (<init>) of the current class.
+Otherwise, if the field is final, it must be declared in the current class, and the instruction must occur in the <clinit> method of the current class.
+Description The arrayref must be of type reference and must refer to an array whose components are of type short.
+Both arrayref and index are popped from the operand stack.
+The component of the array at index is retrieved and sign-extended to an int value.
+Description The arrayref must be of type reference and must refer to an array whose components are of type short.
+The arrayref, index, and value are popped from the operand stack.
+The int value is truncated to a short and stored as the component of the array indexed by index.
+The intermediate value is then sign-extended to an int value.
+Notes The Java Virtual Machine does not provide an instruction implementing a swap on operands of category 2 computational types.
+Immediately after the tableswitch opcode, between zero and three bytes must act as padding, such that defaultbyte1 begins at an address that is a multiple of four bytes from the start of the current method (the opcode of its first instruction)
+Immediately after the padding are bytes constituting three signed 32-bit values: default, low, and high.
+The value low must be less than or equal to high.
+The index must be of type int and is popped from the operand stack.
+If index is less than low or index is greater than high, then a target address is calculated by adding default to the address of the opcode of this tableswitch instruction.
+Otherwise, the offset at position index - low of the jump table is extracted.
+The target address is calculated by adding that offset to the address of the opcode of this tableswitch instruction.
+The target address that can be calculated from each jump table offset, as well as the one that can be calculated from default, must be the address of an opcode of an instruction within the method that contains this tableswitch instruction.
+The calculated index must be an index into the local variable array of the current frame.
+Where the wide instruction modifies an lload, dload, lstore, or dstore instruction, the index following the calculated index (index + 1) must also be an index into the local variable array.
+The widened bytecode operates as normal, except for the use of the wider index and, in the case of the second form, the larger increment range.
+Notes Although we say that wide "modifies the behavior of another instruction," the wide instruction effectively treats the bytes constituting the modified instruction as operands, denaturing the embedded instruction in the process.
+In the case of a modified iinc instruction, one of the logical operands of the iinc is not even at the normal offset from the opcode.
+The embedded instruction must never be executed directly; its opcode must never be the target of any control transfer instruction.
+Oracle hereby grants you a fully-paid, non-exclusive, non-transferable, worldwide, limited license (without the right to sublicense), under Oracle's applicable intellectual property rights to view, download, use and reproduce the Specification only for the purpose of internal evaluation.
+This includes (i) developing applications intended to run on an implementation of the Specification, provided that such applications do not themselves implement any portion(s) of the Specification, and (ii) discussing the Specification with any third party; and (iii) excerpting brief portions of the Specification in oral or written communications which discuss the Specification provided that such excerpts do not in the aggregate constitute a significant portion of the Specification.
+In addition, the foregoing license is expressly conditioned on your not acting outside its scope.
+Also, no right, title, or interest in or to any trademarks, service marks, or trade names of Oracle or Oracle's licensors is granted hereunder.
+Java, and Java-related logos, marks and names are trademarks or registered trademarks of Oracle in the U.S.
+You need not include limitations (a)-(c) from the previous paragraph or any other particular "pass through" requirements in any license You grant concerning the use of your Independent Implementation or products derived from it.
+However, except with respect to Independent Implementations (and products derived from them) that satisfy limitations (a)-(c) from the previous paragraph, You may neither: (a) grant or otherwise pass through to your licensees any licenses under Oracle's applicable intellectual property rights; nor (b) authorize your licensees to make any claims concerning their implementation's compliance with the Specification in question.
+With respect to any patent claims covered by the license granted under subparagraph 2 above that would be infringed by all technically feasible implementations of the Specification, such license is conditioned upon your offering on fair, reasonable and non-discriminatory terms, to any party seeking it from You, a perpetual, non-exclusive, non-transferable, worldwide license under Your patent rights which are or would be infringed by all technically feasible implementations of the Specification to develop, distribute and use a Compliant Implementation.
+With respect to any patent claims owned by Oracle and covered by the license granted under subparagraph 2, whether or not their infringement can be avoided in a technically feasible manner when implementing the Specification, such license shall terminate with respect to such claims if You initiate a claim against Oracle that it has, in the course of performing its responsibilities as the Specification Lead, induced any other entity to infringe Your patent rights.
+Also with respect to any patent claims owned by Oracle and covered by the license granted under subparagraph 2 above, where the infringement of such claims can be avoided in a technically feasible manner when implementing the Specification such license, with respect to such claims, shall terminate if You initiate a claim against Oracle that its making, having made, using, offering to sell, selling or importing a Compliant Implementation infringes Your patent rights.
+For the purposes of this Agreement: "Independent Implementation" shall mean an implementation of the Specification that neither derives from any.
+This Agreement will terminate immediately without notice from Oracle if you breach the Agreement or act outside the scope of the licenses granted above.
+This document does not represent any commitment to release or implement any portion of the Specification in any product.
+In addition, the Specification could include technical inaccuracies or typographical errors.
+You will indemnify, hold harmless, and defend Oracle and its licensors from any claims arising or resulting from: (i) your use of the Specification; (ii) the use or distribution of your Java application, applet and/or implementation; and/or (iii)
+Government: If this Specification is being acquired by or on behalf of the U.S.
+Government prime contractor or subcontractor (at any tier), then the Government's rights in the Software and accompanying documentation shall be only as set forth in this license; this is in accordance with 48 C.F.R.
+If you provide Oracle with any comments or suggestions concerning the Specification ("Feedback"), you hereby: (i) agree that such Feedback is provided on a non-proprietary and non-confidential basis, and (ii) grant Oracle a perpetual, non-exclusive, worldwide, fully paid-up, irrevocable license, with the right to sublicense through multiple levels of sublicensees, to incorporate, disclose, and use without limitation the Feedback for any purpose.
+Any action related to this Agreement will be governed by California law and controlling U.S.
+Convention for the International Sale of Goods and the choice of law rules of any jurisdiction will not apply.
+Licensee agrees to comply strictly with all such laws and regulations and acknowledges that it has the responsibility to obtain such licenses to export, re-export or import as may be required after delivery to Licensee.
+This Agreement is the parties' entire agreement relating to its subject matter.
+It supersedes all prior or contemporaneous oral or written communications, proposals, conditions, representations and warranties and prevails over any conflicting or additional terms of any quote, order, acknowledgment, or other communication between the parties relating to its subject matter during the term of this Agreement.
+No modification to this Agreement will be binding, unless in writing and signed by an authorized representative of each party.

@@ -1,0 +1,4 @@
+Can you have a scalable database without going NoSQL?  Yes.
+Don't need foreign keys or joins if data is inlined.
+We've moved a large and critical application suite from MySQL to F1
+In short, we made our database scale, and didn't lose any key database features along the way.
