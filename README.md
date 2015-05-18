@@ -23,12 +23,16 @@
     文档内容为：
     A better solution is to use shingles, which are compound tokens created 
     from multiple adjacent tokens.
+    对文档内容进行分词并移除停用词之后的结果为：
+    [solution, shingles, compound, tokens, created, multiple, adjacent, tokens]
     
     包含这个词的第二篇文档的ID是47466+1=47467，
     shingles 的词频是1，出现 shingles 的位置是6
     文档内容为：
     Lucene has a sandbox module that simplifies adding shingles to your index, 
     described in section 8.3.2
+    对文档内容进行分词并移除停用词之后的结果为：
+    [lucene, sandbox, module, simplifies, adding, shingles, index, section]
     
     包含这个词的第八篇文档的ID是47466+1+1+2+67+903+17+1=48458，
     shingles 的词频是3，出现 shingles 的位置分别是4、6、11
@@ -36,10 +40,14 @@
     For example the sentence “please divide this sentence into shingles” 
     might be tokenized into the shingles “please divide”, “divide this”, 
     “this sentence”, “sentence into” and “into shingles”
+    对文档内容进行分词并移除停用词之后的结果为：
+    [sentence, divide, sentence, shingles, tokenized, shingles, divide, divide, sentence, sentence, shingles]
     
     这里需要注意的是位置不是和原文一一对应的，而是和去除停用词后的位置一一对应的
-    停用词的定义看下面的链接
+    分词使用word分词提供的针对纯英文文本的分词器
     
-[停用词](https://github.com/ysc/word/blob/master/src/main/resources/stopwords.txt)
+[停用词的定义](https://github.com/ysc/word/blob/master/src/main/resources/stopwords.txt)
+
+[word分词](https://github.com/ysc/word)
         
 
