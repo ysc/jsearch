@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>org.apdplat</groupId>
+    <artifactId>jsearch</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+    
+    <name>jsearch</name>
+    <url>https://github.com/ysc/jsearch</url>
+    <description>
+	    jsearch是一个高性能的全文检索工具包，基于倒排索引，基于java8，类似于lucene，但更轻量级。
+    </description>
+    <organization>
+        <name>APDPlat</name>
+        <url>http://apdplat.org/</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>GNU GENERAL PUBLIC LICENSE, Version 3</name>
+            <url>http://www.gnu.org/licenses/gpl.html</url>
+        </license>
+    </licenses>
+    <inceptionYear>2015</inceptionYear>
+    <scm>
+        <url>https://github.com/ysc/jsearch</url>
+        <connection>scm:git:git://github.com/ysc/jsearch</connection>
+        <developerConnection>scm:git:ssh://git@github.com/ysc/jsearch.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+    <developers>
+        <developer>
+            <name>杨尚川</name>
+            <email>ysc@apdplat.org</email>
+            <url>http://yangshangchuan.iteye.com</url>
+        </developer>
+    </developers>
+  
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <junit.version>4.11</junit.version>
+        <word.version>1.3</word.version>
+        <slf4j-api.version>1.6.4</slf4j-api.version>
+        <logback-classic.version>0.9.28</logback-classic.version>
+    </properties>
+    
+    <dependencies>
+        <!-- 单元测试 -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- 中文分词组件 -->
+        <dependency>
+            <groupId>org.apdplat</groupId>
+            <artifactId>word</artifactId>
+            <version>${word.version}</version>
+        </dependency>
+        <!-- SLF4J日志框架API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
+        <!-- LOGBACK日志实现提供者 -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-classic.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+            <optional>true</optional>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+</project>
