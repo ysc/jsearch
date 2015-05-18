@@ -1,0 +1,11 @@
+.settings/
+.classpath
+.project
+target/
+logs/
+.idea/
+jsearch.iml
+jsearch.ipr
+jsearch.iws
+.gradle/
+build/
