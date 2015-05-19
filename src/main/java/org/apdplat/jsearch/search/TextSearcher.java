@@ -101,22 +101,23 @@ public class TextSearcher implements Searcher {
     }
 
     @Override
-    public List<Doc> search(String keyword){
+    public Hits search(String keyword){
         return search(keyword, SearchMode.INTERSECTION);
     }
 
     @Override
-    public List<Doc> search(String keyword, SearchMode searchMode){
+    public Hits search(String keyword, SearchMode searchMode){
         long start = System.currentTimeMillis();
         //搜索关键词
         List<Doc> docs = hit(keyword, searchMode);
+        int hitCount = docs.size();
         int limit = docs.size() > 10 ? 10 : docs.size();
         docs = docs.subList(0, limit);
         //获取文档
         docs(docs);
         long cost = System.currentTimeMillis()-start;
         LOGGER.info("搜索耗时："+cost+"毫秒");
-        return docs;
+        return new Hits(hitCount, docs);
     }
 
     public List<Doc> hit(String keyword, SearchMode searchMode){
@@ -221,16 +222,16 @@ public class TextSearcher implements Searcher {
 
         textSearcher.setScore(new WordFrequencyScore());
         //SearchMode.INTERSECTION
-        List<Doc> docs = textSearcher.search("shingles", SearchMode.INTERSECTION);
-        LOGGER.info("搜索结果数："+docs.size());
+        Hits hits = textSearcher.search("shingles", SearchMode.INTERSECTION);
+        LOGGER.info("搜索结果数："+hits.getHitCount());
         AtomicInteger i = new AtomicInteger();
-        docs.forEach(doc -> LOGGER.info("Result" + i.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
+        hits.getDocs().forEach(doc -> LOGGER.info("Result" + i.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
 
         textSearcher.setScore(new ProximityScore());
-        docs = textSearcher.search("distributed algorithm ", SearchMode.INTERSECTION);
-        LOGGER.info("搜索结果数："+docs.size());
+        hits = textSearcher.search("distributed algorithm ", SearchMode.INTERSECTION);
+        LOGGER.info("搜索结果数："+hits.getHitCount());
         AtomicInteger j = new AtomicInteger();
-        docs.forEach(doc -> LOGGER.info("Result" + j.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
+        hits.getDocs().forEach(doc -> LOGGER.info("Result" + j.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
 
     }
 }
