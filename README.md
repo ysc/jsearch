@@ -1,5 +1,7 @@
 ###jsearch是一个高性能的全文检索工具包，基于倒排索引，基于java8，类似于lucene，但更轻量级。
 
+[捐赠致谢](https://github.com/ysc/QuestionAnsweringSystem/wiki/donation)
+
 ####索引文件结构
 
     1、一个词的索引由=分割的三部分组成：
