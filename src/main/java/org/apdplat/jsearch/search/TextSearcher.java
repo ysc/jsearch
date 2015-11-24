@@ -82,6 +82,14 @@ public class TextSearcher implements Searcher {
         }
     }
 
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
     public String getIndexText() {
         return indexText;
     }
