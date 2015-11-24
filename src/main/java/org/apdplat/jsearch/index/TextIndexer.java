@@ -107,10 +107,18 @@ public class TextIndexer implements Indexer {
     public void indexDir(String dir){
         try {
             long start = System.currentTimeMillis();
+            Path indexTextPath = Paths.get(this.indexText);
+            if(!Files.exists(indexTextPath.getParent())){
+                indexTextPath.getParent().toFile().mkdirs();
+            }
+            Path indexPath = Paths.get(this.index);
+            if(!Files.exists(indexPath.getParent())){
+                indexPath.getParent().toFile().mkdirs();
+            }
             //词 ->  [{文档ID,位置}, {文档ID,位置}]
             Map<String, Posting> index = new HashMap<>();
             AtomicInteger lineCount = new AtomicInteger();
-            BufferedWriter writer = Files.newBufferedWriter(Paths.get(indexText), Charset.forName("utf-8"));
+            BufferedWriter writer = Files.newBufferedWriter(indexTextPath, Charset.forName("utf-8"));
             //将所有文本合成一个文件，每一行分配一个行号
             getFileNames(dir).forEach(file -> {
                 try {
@@ -162,7 +170,7 @@ public class TextIndexer implements Indexer {
                     return entry.getKey() + "=0";
                 })
                 .collect(Collectors.toList());
-            Files.write(Paths.get(this.index), indices, Charset.forName("utf-8"));
+            Files.write(indexPath, indices, Charset.forName("utf-8"));
             LOGGER.info("索引建立完毕："+this.index+" ,耗时："+(System.currentTimeMillis()-start)+" 毫秒");
         }catch (Exception e){
             LOGGER.error("索引操作出错", e);
