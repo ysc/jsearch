@@ -61,7 +61,7 @@ public class TextSearcher implements Searcher {
 
     private void init(){
         try{
-            LOGGER.error("开始初始化索引");
+            LOGGER.info("开始初始化索引");
             long start = System.currentTimeMillis();
             Files.readAllLines(Paths.get(index)).parallelStream().forEach(line -> {
                 String[] attrs = line.split("=");
@@ -69,7 +69,7 @@ public class TextSearcher implements Searcher {
                     indexMap.put(attrs[0], attrs[2]);
                 }
             });
-            LOGGER.error("索引初始化完毕，耗时：" + (System.currentTimeMillis()-start) + "毫秒");
+            LOGGER.info("索引初始化完毕，耗时：" + (System.currentTimeMillis()-start) + "毫秒");
         }catch (Exception e){
             LOGGER.error("索引初始化失败", e);
             throw new RuntimeException(e);
