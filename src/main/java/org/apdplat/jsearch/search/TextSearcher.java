@@ -48,14 +48,20 @@ public class TextSearcher implements Searcher {
     private String index = "data/index.txt";
     private Map<String, String> indexMap = new ConcurrentHashMap<>();
     private Score score = new WordFrequencyScore();
+    private int pageSize = 10;
 
     public TextSearcher(){
         init();
     }
 
     public TextSearcher(String index, String indexText){
+        this(index, indexText, 10);
+    }
+
+    public TextSearcher(String index, String indexText, int pageSize){
         this.index = index;
         this.indexText = indexText;
+        this.pageSize = pageSize;
         init();
     }
 
@@ -111,7 +117,7 @@ public class TextSearcher implements Searcher {
         //搜索关键词
         List<Doc> docs = hit(keyword, searchMode);
         int hitCount = docs.size();
-        int limit = docs.size() > 10 ? 10 : docs.size();
+        int limit = docs.size() > pageSize ? pageSize : docs.size();
         docs = docs.subList(0, limit);
         //获取文档
         docs(docs);
