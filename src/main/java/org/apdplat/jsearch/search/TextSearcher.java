@@ -116,17 +116,32 @@ public class TextSearcher implements Searcher {
 
     @Override
     public Hits search(String keyword){
+        return search(keyword, 1);
+    }
+    @Override
+    public Hits search(String keyword, int page){
         return search(keyword, SearchMode.INTERSECTION);
     }
 
     @Override
     public Hits search(String keyword, SearchMode searchMode){
+        return search(keyword, searchMode, 1);
+    }
+    @Override
+    public Hits search(String keyword, SearchMode searchMode, int page){
         long start = System.currentTimeMillis();
         //搜索关键词
         List<Doc> docs = hit(keyword, searchMode);
         int hitCount = docs.size();
-        int limit = docs.size() > pageSize ? pageSize : docs.size();
-        docs = docs.subList(0, limit);
+        int fromIndex = (page-1)*pageSize;
+        int toIndex = fromIndex+pageSize;
+        if(toIndex > hitCount){
+            toIndex = hitCount;
+        }
+        if(fromIndex >= toIndex){
+            return new Hits(hitCount, Collections.emptyList());
+        }
+        docs = docs.subList(fromIndex, toIndex);
         //获取文档
         docs(docs);
         long cost = System.currentTimeMillis()-start;
@@ -232,20 +247,26 @@ public class TextSearcher implements Searcher {
     }
 
     public static void main(String[] args) {
+        AtomicInteger i = new AtomicInteger();
+
         TextSearcher textSearcher = new TextSearcher();
 
         textSearcher.setScore(new WordFrequencyScore());
-        //SearchMode.INTERSECTION
-        Hits hits = textSearcher.search("shingles", SearchMode.INTERSECTION);
-        LOGGER.info("搜索结果数："+hits.getHitCount());
-        AtomicInteger i = new AtomicInteger();
-        hits.getDocs().forEach(doc -> LOGGER.info("Result" + i.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
+        for(int page=1; page<=4; page++) {
+            Hits hits = textSearcher.search("shingles", SearchMode.INTERSECTION, page);
+            LOGGER.info("搜索结果数：" + hits.getHitCount());
+            LOGGER.info("第"+page+"页：");
+            i.set(0);
+            hits.getDocs().forEach(doc -> LOGGER.info("Result" + i.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
+        }
 
         textSearcher.setScore(new ProximityScore());
-        hits = textSearcher.search("distributed algorithm ", SearchMode.INTERSECTION);
-        LOGGER.info("搜索结果数："+hits.getHitCount());
-        AtomicInteger j = new AtomicInteger();
-        hits.getDocs().forEach(doc -> LOGGER.info("Result" + j.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
-
+        for(int page=1; page<=3; page++) {
+            Hits hits = textSearcher.search("distributed algorithm", SearchMode.INTERSECTION, page);
+            LOGGER.info("搜索结果数：" + hits.getHitCount());
+            LOGGER.info("第"+page+"页：");
+            i.set(0);
+            hits.getDocs().forEach(doc -> LOGGER.info("Result" + i.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
+        }
     }
 }
