@@ -144,7 +144,7 @@ public class TextSearcher implements Searcher {
         if(words.size()==1){
             //单 词 查询
             result.addAll(term(words.get(0).getText()));
-        }else{
+        }else if(words.size() > 1){
             //多 词 查询
             result.addAll(term(words.get(0).getText()));
             for(int i=1; i<words.size(); i++){
