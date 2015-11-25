@@ -2,6 +2,34 @@
 
 ####[捐赠致谢](https://github.com/ysc/QuestionAnsweringSystem/wiki/donation)
 
+####使用方法
+
+    1、依赖
+        <dependency>
+            <groupId>org.apdplat</groupId>
+            <artifactId>jsearch</artifactId>
+            <version>1.0</version>
+        </dependency>
+    2、索引
+        //存储索引的文件
+        String index = "data/index";
+        //存储以行为单位的原文的文件
+        String indexText = "data/index_text";
+        int indexLengthLimit = 1000;
+        //textPath可以为目录也可以为文件
+        String textPath = "data/original/text";
+        TextIndexer textIndexer = new TextIndexer(index, indexText, indexLengthLimit);
+        textIndexer.indexDir(textPath);
+    3、搜索
+        int pageSize = 100;
+        TextSearcher textSearcher = new TextSearcher(index, indexText);
+        textSearcher.setPageSize(pageSize);
+        textSearcher.setScore(new WordFrequencyScore());
+        Hits hits = textSearcher.search("hive function", SearchMode.INTERSECTION);
+        System.out.println("搜索结果数："+hits.getHitCount());
+        AtomicInteger j = new AtomicInteger();
+        hits.getDocs().forEach(doc -> System.out.println("Result" + j.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
+
 ####索引文件结构
 
     1、一个词的索引由=分割的三部分组成：
