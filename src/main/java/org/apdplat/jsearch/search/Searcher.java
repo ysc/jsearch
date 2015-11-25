@@ -18,8 +18,6 @@
 
 package org.apdplat.jsearch.search;
 
-import java.util.List;
-
 /**
  * 搜索接口
  * @author 杨尚川
@@ -27,4 +25,6 @@ import java.util.List;
 public interface Searcher {
     Hits search(String keyword);
     Hits search(String keyword, SearchMode searchMode);
+    Hits search(String keyword, int page);
+    Hits search(String keyword, SearchMode searchMode, int page);
 }
