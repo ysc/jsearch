@@ -50,6 +50,8 @@
     
 [停用词的定义](https://github.com/ysc/word/blob/master/src/main/resources/stopwords.txt)
 
+[word分词提供的针对纯英文文本的分词器](https://github.com/ysc/word/blob/master/src/main/java/org/apdplat/word/segmentation/impl/PureEnglish.java)
+
 [word分词](https://github.com/ysc/word)
         
 
