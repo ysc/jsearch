@@ -26,6 +26,7 @@ import java.util.List;
  * 评分接口
  * @author 杨尚川
  */
+@FunctionalInterface
 public interface Score {
     /**
      * 文档评分
