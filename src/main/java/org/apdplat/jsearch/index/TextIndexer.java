@@ -126,7 +126,7 @@ public class TextIndexer implements Indexer {
                     AtomicInteger i = new AtomicInteger();
                     lines.forEach(line -> {
                         try {
-                            writer.append(line).append("<<").append(Paths.get(file).getFileName().toString().split("\\.")[0]).append(">>[").append(lines.size()+"/"+i.incrementAndGet()).append("]\n");
+                            writer.append(line).append("《").append(Paths.get(file).getFileName().toString().split("\\.")[0]).append("》【").append(lines.size()+"/"+i.incrementAndGet()).append("】\n");
                             lineCount.incrementAndGet();
                             List<Word> words = WordSegmenter.seg(line, SegmentationAlgorithm.PureEnglish);
                             for(int j=0; j< words.size(); j++){
