@@ -67,7 +67,7 @@ public class TextSearcher implements Searcher {
 
     private void init(){
         try{
-            LOGGER.info("开始初始化索引");
+            LOGGER.info("init index");
             long start = System.currentTimeMillis();
             Files.readAllLines(Paths.get(index)).parallelStream().forEach(line -> {
                 String[] attrs = line.split("=");
@@ -75,9 +75,9 @@ public class TextSearcher implements Searcher {
                     indexMap.put(attrs[0], attrs[2]);
                 }
             });
-            LOGGER.info("索引初始化完毕，耗时：" + (System.currentTimeMillis()-start) + "毫秒");
+            LOGGER.info("init index finished, cost: " + (System.currentTimeMillis()-start) + " ms");
         }catch (Exception e){
-            LOGGER.error("索引初始化失败", e);
+            LOGGER.error("init index failed", e);
             throw new RuntimeException(e);
         }
     }
@@ -145,15 +145,15 @@ public class TextSearcher implements Searcher {
         //获取文档
         docs(docs);
         long cost = System.currentTimeMillis()-start;
-        LOGGER.info("搜索耗时："+cost+"毫秒");
+        LOGGER.info("search cost "+cost+" ms");
         return new Hits(hitCount, docs);
     }
 
     public List<Doc> hit(String keyword, SearchMode searchMode){
         long start = System.currentTimeMillis();
-        LOGGER.info("搜索关键词：" + keyword);
+        LOGGER.info("search keyword: " + keyword);
         List<Word> words = WordSegmenter.seg(keyword, SegmentationAlgorithm.PureEnglish);
-        LOGGER.info("分词结果："+words);
+        LOGGER.info("seg result: "+words);
         //搜索结果文档
         Set<Doc> result = new ConcurrentSkipListSet<>();
         if(words.size()==1){
@@ -181,8 +181,8 @@ public class TextSearcher implements Searcher {
                 .sorted((a, b) -> b.getScore().compareTo(a.getScore()))
                 .collect(Collectors.toList());
         long cost = System.currentTimeMillis()-start;
-        LOGGER.info("命中数：："+result.size());
-        LOGGER.info("查询索引耗时："+cost+"毫秒");
+        LOGGER.info("hit count: "+result.size());
+        LOGGER.info("query index cost: "+cost+" ms");
         return finalResult;
     }
 
@@ -204,14 +204,14 @@ public class TextSearcher implements Searcher {
                 }
             }
         }catch (Exception e){
-            LOGGER.error("读取文件失败", e);
+            LOGGER.error("read file failed", e);
         }
         docs.parallelStream().forEach(doc->doc.setText(data.get(doc.getId())));
         data.clear();
         ids.clear();
         ids = null;
         long cost = System.currentTimeMillis()-startTime;
-        LOGGER.info("准备文本耗时："+cost+"毫秒");
+        LOGGER.info("prepare text cost: "+cost+" ms");
     }
 
     private Set<Doc> term(String word){
