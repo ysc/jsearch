@@ -126,7 +126,7 @@ public class TextIndexer implements Indexer {
                     AtomicInteger i = new AtomicInteger();
                     lines.forEach(line -> {
                         try {
-                            writer.append(line).append("《").append(Paths.get(file).getFileName().toString().split("\\.")[0]).append("》【").append(lines.size()+"/"+i.incrementAndGet()).append("】\n");
+                            writer.append(line).append("<<").append(Paths.get(file).getFileName().toString().split("\\.")[0]).append(">>[").append(lines.size()+"/"+i.incrementAndGet()).append("]\n");
                             lineCount.incrementAndGet();
                             List<Word> words = WordSegmenter.seg(line, SegmentationAlgorithm.PureEnglish);
                             for(int j=0; j< words.size(); j++){
@@ -141,12 +141,12 @@ public class TextIndexer implements Indexer {
                                 }
                             }
                         } catch (IOException e) {
-                            LOGGER.error("文件写入错误", e);
+                            LOGGER.error("write index file error", e);
                         }
                     });
 
                 } catch (IOException e) {
-                    LOGGER.error("文件读取错误", e);
+                    LOGGER.error("read text file error", e);
                 }
             });
             writer.close();
@@ -171,18 +171,18 @@ public class TextIndexer implements Indexer {
                 })
                 .collect(Collectors.toList());
             Files.write(indexPath, indices, Charset.forName("utf-8"));
-            LOGGER.info("索引建立完毕："+this.index+" ,耗时："+(System.currentTimeMillis()-start)+" 毫秒");
+            LOGGER.info("index finished："+this.index+" , cost ："+(System.currentTimeMillis()-start)+" ms");
         }catch (Exception e){
-            LOGGER.error("索引操作出错", e);
+            LOGGER.error("index process error", e);
         }
     }
 
     private Set<String> getFileNames(String path){
         Set<String> fileNames = new HashSet<>();
         if(Files.isDirectory(Paths.get(path))) {
-            LOGGER.info("处理目录：" + path);
+            LOGGER.info("process dir：" + path);
         }else{
-            LOGGER.info("处理文件：" + path);
+            LOGGER.info("process file：" + path);
             fileNames.add(path);
             return fileNames;
         }
@@ -196,7 +196,7 @@ public class TextIndexer implements Indexer {
                     }
                     String fileName = file.toFile().getAbsolutePath();
                     if (!fileName.endsWith(".txt")) {
-                        LOGGER.info("放弃处理非txt文件：" + fileName);
+                        LOGGER.info("filter non-txt file：" + fileName);
                         return FileVisitResult.CONTINUE;
                     }
                     fileNames.add(fileName);
