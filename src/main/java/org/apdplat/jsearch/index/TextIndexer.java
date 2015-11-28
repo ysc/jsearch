@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.*;
@@ -123,6 +124,11 @@ public class TextIndexer implements Indexer {
             getFileNames(dir).forEach(file -> {
                 try {
                     List<String> lines = Files.readAllLines(Paths.get(file));
+                    if(lines.size()<1){
+                        new File(file).delete();
+                        System.out.println("empty file: "+file);
+                        return;
+                    }
                     AtomicInteger i = new AtomicInteger();
                     lines.forEach(line -> {
                         try {
