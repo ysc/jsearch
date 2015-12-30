@@ -160,7 +160,7 @@ public class TextIndexer implements Indexer {
             index
                 .entrySet()
                 .stream()
-                .sorted((a,b)->(b.getValue().size()-a.getValue().size()))
+                .sorted((a,b)->b.getValue().size()-a.getValue().size())
                 .map(entry -> {
                     StringBuilder docs = new StringBuilder();
                     AtomicInteger lastDocId = new AtomicInteger();
