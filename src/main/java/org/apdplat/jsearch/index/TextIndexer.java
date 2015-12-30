@@ -211,7 +211,7 @@ public class TextIndexer implements Indexer {
 
             });
         }catch (IOException e){
-            e.printStackTrace();
+            LOGGER.error("get file names failed", e);
         }
         return fileNames;
     }
