@@ -126,7 +126,7 @@ public class TextIndexer implements Indexer {
                     List<String> lines = Files.readAllLines(Paths.get(file));
                     if(lines.size()<1){
                         new File(file).delete();
-                        System.out.println("empty file: "+file);
+                        LOGGER.error("empty file: {}", file);
                         return;
                     }
                     AtomicInteger i = new AtomicInteger();
