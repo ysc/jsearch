@@ -219,6 +219,5 @@ public class TextIndexer implements Indexer {
     public static void main(String[] args) {
         Indexer textIndexer = new TextIndexer();
         textIndexer.indexDir("src/test/resources/it");
-        System.exit(0);
     }
 }
