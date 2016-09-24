@@ -106,6 +106,11 @@ public class TextIndexer implements Indexer {
 
     @Override
     public void indexDir(String dir){
+        indexDir(dir, SegmentationAlgorithm.PureEnglish);
+    }
+
+    @Override
+    public void indexDir(String dir, SegmentationAlgorithm segmentationAlgorithm){
         try {
             long start = System.currentTimeMillis();
             Path indexTextPath = Paths.get(this.indexText);
@@ -134,7 +139,7 @@ public class TextIndexer implements Indexer {
                         try {
                             writer.append(line).append("《").append(Paths.get(file).getFileName().toString().split("\\.")[0]).append("》【").append(lines.size()+"/"+i.incrementAndGet()).append("】\n");
                             lineCount.incrementAndGet();
-                            List<Word> words = WordSegmenter.seg(line, SegmentationAlgorithm.PureEnglish);
+                            List<Word> words = WordSegmenter.seg(line, segmentationAlgorithm);
                             for(int j=0; j< words.size(); j++){
                                 Word word = words.get(j);
                                 //准备倒排表
@@ -219,5 +224,6 @@ public class TextIndexer implements Indexer {
     public static void main(String[] args) {
         Indexer textIndexer = new TextIndexer();
         textIndexer.indexDir("src/test/resources/it");
+        textIndexer.indexDir("src/test/resources/cn", SegmentationAlgorithm.MaxNgramScore);
     }
 }
