@@ -49,8 +49,10 @@ public class TextSearcher implements Searcher {
     private Map<String, String> indexMap = new ConcurrentHashMap<>();
     private Score score = new WordFrequencyScore();
     private int pageSize = 10;
+    private SegmentationAlgorithm segmentationAlgorithm;
 
-    public TextSearcher(){
+    public TextSearcher(SegmentationAlgorithm segmentationAlgorithm){
+        this.segmentationAlgorithm = segmentationAlgorithm;
         init();
     }
 
@@ -152,7 +154,7 @@ public class TextSearcher implements Searcher {
     public List<Doc> hit(String keyword, SearchMode searchMode){
         long start = System.currentTimeMillis();
         LOGGER.info("search keyword: " + keyword);
-        List<Word> words = WordSegmenter.seg(keyword, SegmentationAlgorithm.PureEnglish);
+        List<Word> words = WordSegmenter.seg(keyword, segmentationAlgorithm);
         LOGGER.info("seg result: "+words);
         //搜索结果文档
         Set<Doc> result = new ConcurrentSkipListSet<>();
@@ -249,11 +251,11 @@ public class TextSearcher implements Searcher {
     public static void main(String[] args) {
         AtomicInteger i = new AtomicInteger();
 
-        TextSearcher textSearcher = new TextSearcher();
+        TextSearcher textSearcher = new TextSearcher(SegmentationAlgorithm.MaxNgramScore);
 
         textSearcher.setScore(new WordFrequencyScore());
         for(int page=1; page<=4; page++) {
-            Hits hits = textSearcher.search("shingles", SearchMode.INTERSECTION, page);
+            Hits hits = textSearcher.search("乱码", SearchMode.INTERSECTION, page);
             LOGGER.info("搜索结果数：" + hits.getHitCount());
             LOGGER.info("第"+page+"页：");
             i.set(0);
@@ -262,7 +264,7 @@ public class TextSearcher implements Searcher {
 
         textSearcher.setScore(new ProximityScore());
         for(int page=1; page<=3; page++) {
-            Hits hits = textSearcher.search("distributed algorithm", SearchMode.INTERSECTION, page);
+            Hits hits = textSearcher.search("中文", SearchMode.INTERSECTION, page);
             LOGGER.info("搜索结果数：" + hits.getHitCount());
             LOGGER.info("第"+page+"页：");
             i.set(0);
