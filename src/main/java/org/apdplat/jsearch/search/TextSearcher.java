@@ -56,11 +56,12 @@ public class TextSearcher implements Searcher {
         init();
     }
 
-    public TextSearcher(String index, String indexText){
-        this(index, indexText, 10);
+    public TextSearcher(String index, String indexText, SegmentationAlgorithm segmentationAlgorithm){
+        this(index, indexText, 10, segmentationAlgorithm);
     }
 
-    public TextSearcher(String index, String indexText, int pageSize){
+    public TextSearcher(String index, String indexText, int pageSize, SegmentationAlgorithm segmentationAlgorithm){
+        this.segmentationAlgorithm = segmentationAlgorithm;
         this.index = index;
         this.indexText = indexText;
         this.pageSize = pageSize;
