@@ -82,4 +82,4 @@
 
 [word分词](https://github.com/ysc/word)
         
-
+[https://travis-ci.org/ysc/jsearch](https://travis-ci.org/ysc/jsearch)
