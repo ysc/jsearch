@@ -1,8 +1,8 @@
-###jsearch是一个高性能的全文检索工具包，基于倒排索引，基于java8，类似于lucene，但更轻量级。
+### jsearch是一个高性能的全文检索工具包，基于倒排索引，基于java8，类似于lucene，但更轻量级。
 
-####[捐赠致谢](https://github.com/ysc/QuestionAnsweringSystem/wiki/donation)
+#### [捐赠致谢](https://github.com/ysc/QuestionAnsweringSystem/wiki/donation)
 
-####使用方法
+#### 使用方法
 
     1、依赖
         <dependency>
@@ -30,7 +30,7 @@
         AtomicInteger j = new AtomicInteger();
         hits.getDocs().forEach(doc -> System.out.println("Result" + j.incrementAndGet() + "、ID：" + doc.getId() + "，Score：" + doc.getScore() + "，Text：" + doc.getText()));
 
-####索引文件结构
+#### 索引文件结构
 
     1、一个词的索引由=分割的三部分组成：
         第一部分是词
